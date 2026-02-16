@@ -138,9 +138,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const normalizedEmail = email.trim().toLowerCase();
 
         // Usar Firebase si la API Key está configurada, de lo contrario usar fallback local
-        const isFirebaseConfigured = !!import.meta.env.VITE_FIREBASE_API_KEY && !import.meta.env.VITE_FIREBASE_API_KEY.includes('placeholder');
+        const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || '';
+        const isFirebaseConfigured = !!apiKey && !apiKey.includes('placeholder');
 
+        console.log('[Auth] Attempting login. Firebase configured:', isFirebaseConfigured);
         if (!isFirebaseConfigured) {
+            console.warn('[Auth] Firebase not configured or using placeholders. Falling back to local server.');
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
