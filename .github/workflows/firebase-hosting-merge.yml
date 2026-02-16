@@ -12,6 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci && npm run build
+        env:
+          VITE_FIREBASE_API_KEY: AIzaSyBvRGiSWUdnZ88NsUX0EsLdnXwJk5AXVSA
+          VITE_FIREBASE_AUTH_DOMAIN: app-correo-cft.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: app-correo-cft
+          VITE_FIREBASE_STORAGE_BUCKET: app-correo-cft.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: 140293468941
+          VITE_FIREBASE_APP_ID: 1:140293468941:web:5e0ac40c2587880b34f644
+          VITE_ADMIN_EMAIL: mguzmanahumada@gmail.com
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
