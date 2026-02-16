@@ -8,7 +8,6 @@ import {
   Calendar, Info, ChevronDown, CheckCircle2, AlertCircle, AlertTriangle, Clock, Sun
 } from 'lucide-react';
 import { formatRut, toProperCase } from '../utils/formatters';
-import { extractDataFromPdf, extractFLDataFromPdf } from '../utils/aiProcessor';
 import { compareRecordsByDateDesc } from '../utils/recordDates';
 import { getFLSaldoFinal } from '../utils/flBalance';
 
@@ -93,7 +92,6 @@ const PermitForm: React.FC<PermitFormProps> = ({
 
   const [formData, setFormData] = useState<PermitFormData>(initialState);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [detectedSaldo, setDetectedSaldo] = useState<number | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -211,119 +209,6 @@ const PermitForm: React.FC<PermitFormProps> = ({
     setFormData(prev => ({ ...prev, [name]: newValue }));
     const error = validateField(name, newValue);
     setErrors(prev => ({ ...prev, [name]: error }));
-  };
-
-  const readFileAsBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const result = ev.target?.result as string;
-        resolve(result.split(',')[1]);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setIsProcessing(true);
-    setFormError(null);
-
-    try {
-      // PA: un solo archivo
-      if (formData.solicitudType === 'PA') {
-        const base64 = await readFileAsBase64(files[0]);
-        const result = await extractDataFromPdf(base64);
-        if (!result.success || !result.data) {
-          throw new Error(result.error || "No se pudo extraer información del PDF.");
-        }
-        const data = result.data;
-        setFormData(prev => ({
-          ...prev,
-          ...data,
-          funcionario: toProperCase(data.funcionario || ""),
-          rut: formatRut(data.rut || "")
-        }));
-      } else {
-        // FL: 1 o 2 archivos (cada uno un período) — secuencial para evitar 503 por sobrecarga
-        const fileArray = Array.from(files);
-        const results: Awaited<ReturnType<typeof extractFLDataFromPdf>>[] = [];
-        for (const file of fileArray) {
-          const base64 = await readFileAsBase64(file);
-          const result = await extractFLDataFromPdf(base64);
-          results.push(result);
-        }
-
-        const validResults = results
-          .filter(r => r.success && r.data)
-          .map(r => r.data!);
-        if (validResults.length === 0) {
-          const errorMsg = results.find(r => r.error)?.error || "No se pudo extraer información de los PDFs.";
-          throw new Error(errorMsg);
-        }
-
-        // DEBUG: Ver exactamente qué devuelve la IA para cada PDF
-        console.log('[FL Scan] Resultados crudos de la IA:', JSON.stringify(validResults, null, 2));
-        validResults.forEach((r, i) => {
-          console.log(`[FL Scan] PDF ${i + 1}:`, {
-            periodo: r.periodo,
-            saldoDisponible: r.saldoDisponible,
-            solicitado: r.solicitado,
-            cantidadDias: r.cantidadDias,
-            // Mostrar todas las propiedades por si viene con otro nombre
-            todasLasPropiedades: Object.keys(r)
-          });
-        });
-
-        // Ordenar por período (el más antiguo primero)
-        validResults.sort((a, b) => (a.periodo || '').localeCompare(b.periodo || ''));
-
-        const first = validResults[0];
-        const second = validResults.length > 1 ? validResults[1] : null;
-
-        console.log('[FL Scan] Después de ordenar - first:', first);
-        console.log('[FL Scan] Después de ordenar - second:', second);
-        console.log('[FL Scan] saldoDisponibleP1 será:', first.saldoDisponible || 0);
-        console.log('[FL Scan] saldoDisponibleP2 será:', second?.saldoDisponible || 0);
-
-        // Calcular totales
-        const totalDias = (first.solicitado || first.cantidadDias || 0) + (second?.solicitado || second?.cantidadDias || 0);
-
-        skipAutoSaldoRef.current = true;
-
-        setFormData(prev => ({
-          ...prev,
-          solicitudType: 'FL' as const,
-          funcionario: toProperCase(first.funcionario || ""),
-          rut: formatRut(first.rut || ""),
-          cantidadDias: totalDias,
-          fechaInicio: first.fechaInicio || '',
-          fechaTermino: second?.fechaTermino || first.fechaTermino || '',
-          fechaDecreto: first.fechaDecreto || second?.fechaDecreto || '',
-          // Período 1
-          periodo1: first.periodo || '',
-          saldoDisponibleP1: first.saldoDisponible || 0,
-          solicitadoP1: first.solicitado || first.cantidadDias || 0,
-          // Período 2
-          periodo2: second?.periodo || '',
-          saldoDisponibleP2: second?.saldoDisponible || 0,
-          solicitadoP2: second?.solicitado || second?.cantidadDias || 0,
-        }));
-
-        const scannedSaldo = typeof first.saldoDisponible === 'number' ? first.saldoDisponible : null;
-        setDetectedSaldo(scannedSaldo);
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error desconocido';
-      console.error('[AI] Error al procesar PDF:', err);
-      setFormError(message || "Error al procesar PDF con IA. Por favor, ingresa los datos manualmente.");
-    } finally {
-      setIsProcessing(false);
-      // Limpiar input para permitir re-subida
-      if (e.target) e.target.value = '';
-    }
   };
 
   const selectEmployee = (emp: Employee) => {
@@ -531,38 +416,25 @@ const PermitForm: React.FC<PermitFormProps> = ({
           </div>
 
           <div className="flex items-center gap-4 sm:gap-5 z-10">
-            <div className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl backdrop-blur-md shadow-lg ${isProcessing ? 'bg-white/10 animate-spin' : 'bg-white/20'}`}>
-              {isProcessing ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6" /> : editingRecord ? <Save className="w-5 h-5 sm:w-6 sm:h-6" /> : <PlusCircle className="w-5 h-5 sm:w-6 sm:h-6" />}
+            <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl backdrop-blur-md shadow-lg bg-white/20">
+              {editingRecord ? <Save className="w-5 h-5 sm:w-6 sm:h-6" /> : <PlusCircle className="w-5 h-5 sm:w-6 sm:h-6" />}
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-extrabold uppercase tracking-tight">
                 {editingRecord ? 'Editando Resolución' : 'Generar Acto Administrativo'}
               </h2>
               <p className="text-[10px] sm:text-[11px] font-bold uppercase opacity-80 tracking-[0.15em] sm:tracking-[0.2em] mt-1">
-                {isProcessing ? 'Analizando con Gemini 3 Flash...' : formData.solicitudType === 'PA' ? 'Permiso Administrativo' : 'Feriado Legal'}
+                {formData.solicitudType === 'PA' ? 'Permiso Administrativo' : 'Feriado Legal'}
               </p>
             </div>
           </div>
 
           <div className="flex gap-2 z-10 w-full sm:w-auto">
-            {!editingRecord && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isProcessing}
-                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 bg-white text-slate-900 hover:bg-slate-100 rounded-xl text-[10px] sm:text-[11px] font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50"
-              >
-                <FileUp className="w-4 h-4 text-indigo-600" />
-                <span className="hidden sm:inline">{formData.solicitudType === 'FL' ? 'ESCANEAR SOLICITUD(ES)' : 'ESCANEAR SOLICITUD'}</span>
-                <span className="sm:hidden">ESCANEAR</span>
-              </button>
-            )}
             {editingRecord && (
               <button type="button" onClick={onCancelEdit} className="p-2.5 hover:bg-white/20 rounded-xl transition-all border border-white/20">
                 <X className="w-5 h-5" />
               </button>
             )}
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} hidden accept="application/pdf" multiple={formData.solicitudType === 'FL'} />
           </div>
         </div>
 
