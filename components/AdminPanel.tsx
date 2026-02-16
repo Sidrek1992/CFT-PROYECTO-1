@@ -1,0 +1,664 @@
+import React, { useState, useEffect } from 'react';
+import {
+    X,
+    Settings,
+    Users,
+    Shield,
+    UserPlus,
+    Trash2,
+    Crown,
+    Eye,
+    EyeOff,
+    Loader2,
+    AlertCircle,
+    CheckCircle,
+    Mail,
+    Save,
+    KeyRound,
+    ShieldAlert,
+    Clock3
+} from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { UserRole, ROLE_LABELS, ROLE_COLORS } from '../types/roles';
+import {
+    loadUserRoles,
+    saveUserRoles,
+    loadUserProfiles,
+    saveUserProfiles,
+    loadUserSecurity,
+    saveUserSecurity,
+    updateUserSecurity
+} from '../utils/userAdminStorage';
+import { appendAuditLog, getAuditLog } from '../utils/audit';
+
+interface AdminPanelProps {
+    isOpen: boolean;
+    onClose: () => void;
+    /** When 'inline', renders as embedded content without modal wrapper */
+    mode?: 'modal' | 'inline';
+}
+
+interface ManagedUser {
+    email: string;
+    role: UserRole;
+    firstName: string;
+    lastName: string;
+    password: string;
+    blocked: boolean;
+    forcePasswordChange: boolean;
+    lastAccessAt: number | null;
+    createdAt?: string;
+}
+
+
+export const getUserRole = (email: string): UserRole => {
+    const roles = loadUserRoles();
+    return roles[email.toLowerCase()] || 'reader';
+};
+
+export const isAdminEmail = (email: string): boolean => {
+    return getUserRole(email) === 'admin';
+};
+
+const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, mode = 'modal' }) => {
+    const [users, setUsers] = useState<ManagedUser[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+    const [createFirstName, setCreateFirstName] = useState('');
+    const [createLastName, setCreateLastName] = useState('');
+    const [createEmail, setCreateEmail] = useState('');
+    const [createPassword, setCreatePassword] = useState('');
+    const [createRole, setCreateRole] = useState<UserRole>('reader');
+    const [showCreatePassword, setShowCreatePassword] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+
+    const [assignFirstName, setAssignFirstName] = useState('');
+    const [assignLastName, setAssignLastName] = useState('');
+    const [assignEmail, setAssignEmail] = useState('');
+    const [assignRole, setAssignRole] = useState<UserRole>('reader');
+
+    const [isResettingByEmail, setIsResettingByEmail] = useState<Record<string, boolean>>({});
+    const [profileDrafts, setProfileDrafts] = useState<Record<string, { firstName: string; lastName: string }>>({});
+    const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
+    const [showPasswordByEmail, setShowPasswordByEmail] = useState<Record<string, boolean>>({});
+    const [adminAuditEntries, setAdminAuditEntries] = useState(() => getAuditLog().slice(0, 30));
+
+    useEffect(() => {
+        if (isOpen || mode === 'inline') {
+            loadUsers();
+        }
+    }, [isOpen, mode]);
+
+    const loadUsers = () => {
+        const roles = loadUserRoles();
+        const profiles = loadUserProfiles();
+        const security = loadUserSecurity();
+        const emails = new Set<string>([
+            ...Object.keys(roles),
+            ...Object.keys(profiles),
+            ...Object.keys(security)
+        ]);
+
+        const userList: ManagedUser[] = Array.from(emails)
+            .map((rawEmail) => {
+                const email = rawEmail.toLowerCase();
+                const profile = profiles[email] || { firstName: '', lastName: '' };
+                const sec = security[email] || { blocked: false, forcePasswordChange: false, lastAccessAt: null };
+                return {
+                    email,
+                    role: roles[email] || 'reader',
+                    firstName: profile.firstName,
+                    lastName: profile.lastName,
+                    password: '',
+                    blocked: Boolean(sec.blocked),
+                    forcePasswordChange: Boolean(sec.forcePasswordChange),
+                    lastAccessAt: sec.lastAccessAt ?? null
+                };
+            })
+            .sort((a, b) => a.email.localeCompare(b.email));
+
+        setUsers(userList);
+
+        const drafts: Record<string, { firstName: string; lastName: string }> = {};
+        userList.forEach((user) => {
+            drafts[user.email] = {
+                firstName: user.firstName,
+                lastName: user.lastName
+            };
+        });
+        setProfileDrafts(drafts);
+
+        const passwordMap: Record<string, string> = {};
+        userList.forEach((user) => {
+            passwordMap[user.email] = user.password;
+        });
+        setPasswordDrafts(passwordMap);
+        setAdminAuditEntries(getAuditLog().slice(0, 30));
+    };
+
+    const handleCreateUser = async () => {
+        if (!createFirstName.trim() || !createLastName.trim() || !createEmail.trim() || !createPassword.trim()) {
+            setError('Nombre, apellido, email y contraseña son requeridos');
+            return;
+        }
+
+        if (createPassword.length < 6) {
+            setError('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+
+        setIsCreating(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const email = createEmail.trim().toLowerCase();
+            const firstName = createFirstName.trim();
+            const lastName = createLastName.trim();
+
+            const { error: signUpError } = await supabase.auth.signUp({
+                email,
+                password: createPassword,
+                options: {
+                    emailRedirectTo: window.location.origin,
+                    data: {
+                        role: createRole,
+                        first_name: firstName,
+                        last_name: lastName,
+                        full_name: `${firstName} ${lastName}`.trim()
+                    }
+                }
+            });
+
+            if (signUpError) {
+                throw signUpError;
+            }
+
+            const roles = loadUserRoles();
+            roles[email] = createRole;
+            saveUserRoles(roles);
+
+            const profiles = loadUserProfiles();
+            profiles[email] = { firstName, lastName };
+            saveUserProfiles(profiles);
+
+
+            const security = loadUserSecurity();
+            security[email] = { blocked: false, forcePasswordChange: false, lastAccessAt: null };
+            saveUserSecurity(security);
+
+            appendAuditLog({
+                scope: 'admin',
+                action: 'create_user',
+                actor: 'admin',
+                target: email,
+                details: `Creado con rol ${createRole}`
+            });
+
+            loadUsers();
+
+            setSuccess(`Usuario ${email} creado exitosamente como ${ROLE_LABELS[createRole]}`);
+            setCreateFirstName('');
+            setCreateLastName('');
+            setCreateEmail('');
+            setCreatePassword('');
+            setCreateRole('reader');
+            setShowCreatePassword(false);
+        } catch (err: any) {
+            if (err.message?.includes('already registered')) {
+                setError('Este email ya está registrado');
+            } else {
+                setError(err.message || 'Error al crear usuario');
+            }
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
+    const handleChangeRole = (email: string, newRole: UserRole) => {
+        const roles = loadUserRoles();
+        roles[email.toLowerCase()] = newRole;
+        saveUserRoles(roles);
+        appendAuditLog({
+            scope: 'admin',
+            action: 'change_role',
+            actor: 'admin',
+            target: email,
+            details: `Rol actualizado a ${newRole}`
+        });
+        loadUsers();
+        setSuccess(`Rol de ${email} cambiado a ${ROLE_LABELS[newRole]}`);
+    };
+
+    const handleRemoveUser = (email: string) => {
+        if (email.toLowerCase() === 'mguzmanahumada@gmail.com') {
+            setError('No puedes eliminar al administrador principal');
+            return;
+        }
+
+        const roles = loadUserRoles();
+        delete roles[email.toLowerCase()];
+        saveUserRoles(roles);
+
+        const profiles = loadUserProfiles();
+        delete profiles[email.toLowerCase()];
+        saveUserProfiles(profiles);
+
+
+        const security = loadUserSecurity();
+        delete security[email.toLowerCase()];
+        saveUserSecurity(security);
+
+        appendAuditLog({
+            scope: 'admin',
+            action: 'remove_user',
+            actor: 'admin',
+            target: email,
+            details: 'Usuario eliminado del panel'
+        });
+
+        loadUsers();
+        setSuccess(`Usuario ${email} eliminado de la gestión de roles`);
+    };
+
+    const handleAddExistingUser = () => {
+        if (!assignEmail.trim()) {
+            setError('Ingresa un email');
+            return;
+        }
+
+        if (!assignFirstName.trim() || !assignLastName.trim()) {
+            setError('Ingresa nombre y apellido del usuario');
+            return;
+        }
+
+        const email = assignEmail.trim().toLowerCase();
+        const firstName = assignFirstName.trim();
+        const lastName = assignLastName.trim();
+
+        const roles = loadUserRoles();
+        if (roles[email]) {
+            setError('Este usuario ya está en la lista');
+            return;
+        }
+
+        roles[email] = assignRole;
+        saveUserRoles(roles);
+
+        const profiles = loadUserProfiles();
+        profiles[email] = { firstName, lastName };
+        saveUserProfiles(profiles);
+
+
+        const security = loadUserSecurity();
+        if (!security[email]) security[email] = { blocked: false, forcePasswordChange: false, lastAccessAt: null };
+        saveUserSecurity(security);
+
+        appendAuditLog({
+            scope: 'admin',
+            action: 'add_existing_user',
+            actor: 'admin',
+            target: email,
+            details: `Asignado como ${assignRole}`
+        });
+
+        loadUsers();
+        setSuccess(`Usuario ${email} añadido como ${ROLE_LABELS[assignRole]}`);
+        setAssignFirstName('');
+        setAssignLastName('');
+        setAssignEmail('');
+        setAssignRole('reader');
+    };
+
+    const handleProfileDraftChange = (email: string, field: 'firstName' | 'lastName', value: string) => {
+        setProfileDrafts((prev) => ({
+            ...prev,
+            [email]: {
+                ...(prev[email] || { firstName: '', lastName: '' }),
+                [field]: value
+            }
+        }));
+    };
+
+    const handleSaveProfile = (email: string) => {
+        const draft = profileDrafts[email] || { firstName: '', lastName: '' };
+        const firstName = draft.firstName.trim();
+        const lastName = draft.lastName.trim();
+
+        if (!firstName || !lastName) {
+            setError('Nombre y apellido no pueden quedar vacíos');
+            return;
+        }
+
+        const profiles = loadUserProfiles();
+        profiles[email.toLowerCase()] = { firstName, lastName };
+        saveUserProfiles(profiles);
+        appendAuditLog({
+            scope: 'admin',
+            action: 'update_profile',
+            actor: 'admin',
+            target: email,
+            details: `Nombre actualizado a ${firstName} ${lastName}`
+        });
+        loadUsers();
+        setSuccess(`Datos actualizados para ${email}`);
+    };
+
+    const handleResetPassword = async (email: string) => {
+        const normalized = email.toLowerCase();
+        setError(null);
+        setSuccess(null);
+        setIsResettingByEmail((prev) => ({ ...prev, [normalized]: true }));
+
+        try {
+            const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalized, {
+                redirectTo: `${window.location.origin}/reset-password`
+            });
+
+            if (resetError) {
+                throw resetError;
+            }
+
+            updateUserSecurity(normalized, { forcePasswordChange: false });
+            appendAuditLog({
+                scope: 'admin',
+                action: 'reset_password_email',
+                actor: 'admin',
+                target: normalized,
+                details: 'Envio de email de restablecimiento'
+            });
+
+            setSuccess(`Se envió un enlace de restablecimiento de contraseña a ${normalized}`);
+        } catch (err: any) {
+            setError(err.message || 'No se pudo iniciar el restablecimiento de contraseña');
+        } finally {
+            setIsResettingByEmail((prev) => ({ ...prev, [normalized]: false }));
+        }
+    };
+
+    const handlePasswordDraftChange = (email: string, value: string) => {
+        setPasswordDrafts((prev) => ({ ...prev, [email]: value }));
+    };
+
+
+    const togglePasswordVisibility = (email: string) => {
+        setShowPasswordByEmail((prev) => ({ ...prev, [email]: !prev[email] }));
+    };
+
+    const handleToggleBlocked = (email: string, blocked: boolean) => {
+        updateUserSecurity(email, { blocked });
+        appendAuditLog({
+            scope: 'admin',
+            action: blocked ? 'block_user' : 'unblock_user',
+            actor: 'admin',
+            target: email,
+            details: blocked ? 'Cuenta bloqueada' : 'Cuenta desbloqueada'
+        });
+        loadUsers();
+        setSuccess(blocked ? `Usuario ${email} bloqueado` : `Usuario ${email} desbloqueado`);
+    };
+
+    const handleToggleForcePasswordChange = (email: string, forcePasswordChange: boolean) => {
+        updateUserSecurity(email, { forcePasswordChange });
+        appendAuditLog({
+            scope: 'admin',
+            action: forcePasswordChange ? 'force_password_change_on' : 'force_password_change_off',
+            actor: 'admin',
+            target: email,
+            details: forcePasswordChange ? 'Cambio de contraseña obligatorio activado' : 'Cambio de contraseña obligatorio desactivado'
+        });
+        loadUsers();
+        setSuccess(forcePasswordChange
+            ? `Se exigirá cambio de contraseña a ${email}`
+            : `Se quitó la exigencia de cambio para ${email}`);
+    };
+
+    // -----------------------------------------------------------------------
+    // Shared JSX content (used by both inline and modal modes)
+    // -----------------------------------------------------------------------
+    const renderContent = () => (
+        <>
+            {/* Crear nuevo usuario */}
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-4">
+                    <UserPlus className="w-5 h-5 text-indigo-500" />
+                    <h3 className="font-black text-slate-900 dark:text-white">Crear Nuevo Usuario</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Nombre</label>
+                        <input type="text" value={createFirstName} onChange={(e) => setCreateFirstName(e.target.value)} placeholder="Ej: Juan" className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Apellido</label>
+                        <input type="text" value={createLastName} onChange={(e) => setCreateLastName(e.target.value)} placeholder="Ej: Perez" className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Email</label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input type="email" value={createEmail} onChange={(e) => setCreateEmail(e.target.value)} placeholder="usuario@email.com" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Contraseña</label>
+                        <div className="relative">
+                            <input type={showCreatePassword ? 'text' : 'password'} value={createPassword} onChange={(e) => setCreatePassword(e.target.value)} placeholder="Mínimo 6 caracteres" className="w-full pl-4 pr-11 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <button type="button" onClick={() => setShowCreatePassword((prev) => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" title={showCreatePassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                                {showCreatePassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Rol</label>
+                        <select value={createRole} onChange={(e) => setCreateRole(e.target.value as UserRole)} className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="reader">Lector</option>
+                            <option value="editor">Editor</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <div className="flex items-end">
+                        <button onClick={handleCreateUser} disabled={isCreating} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+                            {isCreating ? (<><Loader2 className="w-4 h-4 animate-spin" /> Creando...</>) : (<><UserPlus className="w-4 h-4" /> Crear Usuario</>)}
+                        </button>
+                    </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-3">Se creara el usuario con nombre, apellido y rol. Supabase enviara confirmacion por correo si esta habilitada.</p>
+            </div>
+
+            {/* Lista de usuarios */}
+            <div>
+                <div className="flex items-center gap-2 mb-4">
+                    <Users className="w-5 h-5 text-indigo-500" />
+                    <h3 className="font-black text-slate-900 dark:text-white">Usuarios Registrados</h3>
+                    <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold">{users.length}</span>
+                </div>
+
+                <div className="space-y-2">
+                    {users.map((user) => (
+                        <div key={user.email} className="p-4 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${user.role === 'admin' ? 'bg-purple-100 dark:bg-purple-900/40' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                                        {user.role === 'admin' ? <Crown className="w-5 h-5 text-purple-600 dark:text-purple-400" /> : <Eye className="w-5 h-5 text-slate-500 dark:text-slate-400" />}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                            {(user.firstName || user.lastName) ? `${user.firstName} ${user.lastName}`.trim() : 'Sin nombre configurado'}
+                                        </p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                            <Clock3 className="w-3 h-3" />
+                                            {user.lastAccessAt ? `Último acceso: ${new Date(user.lastAccessAt).toLocaleString('es-CL')}` : 'Sin accesos registrados'}
+                                        </p>
+                                        <span className={`inline-flex mt-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${ROLE_COLORS[user.role].bg} ${ROLE_COLORS[user.role].text}`}>
+                                            {ROLE_LABELS[user.role]}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <select value={user.role} onChange={(e) => handleChangeRole(user.email, e.target.value as UserRole)} disabled={user.email.toLowerCase() === 'mguzmanahumada@gmail.com'} className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <option value="reader">Lector</option>
+                                        <option value="editor">Editor</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                    {user.email.toLowerCase() !== 'mguzmanahumada@gmail.com' && (
+                                        <button onClick={() => handleRemoveUser(user.email)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Eliminar de la gestión">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+                                <input type="text" value={profileDrafts[user.email]?.firstName ?? ''} onChange={(e) => handleProfileDraftChange(user.email, 'firstName', e.target.value)} placeholder="Nombre" className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm" />
+                                <input type="text" value={profileDrafts[user.email]?.lastName ?? ''} onChange={(e) => handleProfileDraftChange(user.email, 'lastName', e.target.value)} placeholder="Apellido" className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm" />
+                                <button onClick={() => handleSaveProfile(user.email)} className="px-3 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5">
+                                    <Save size={13} /> Guardar
+                                </button>
+                            </div>
+
+                            <div className="flex justify-end mt-1">
+                                <button onClick={() => handleResetPassword(user.email)} disabled={Boolean(isResettingByEmail[user.email])} className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-2 disabled:opacity-60">
+                                    {isResettingByEmail[user.email] ? (<><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>) : (<><KeyRound className="w-4 h-4" /> Restablecer por Email</>)}
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button onClick={() => handleToggleBlocked(user.email, !user.blocked)} className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 ${user.blocked ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                                    <ShieldAlert className="w-4 h-4" />
+                                    {user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
+                                </button>
+                                <button onClick={() => handleToggleForcePasswordChange(user.email, !user.forcePasswordChange)} className={`px-3 py-2 rounded-lg text-xs font-bold ${user.forcePasswordChange ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200'}`}>
+                                    {user.forcePasswordChange ? 'Quitar cambio obligatorio' : 'Forzar cambio de contraseña'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+
+                    {users.length === 0 && (
+                        <div className="text-center py-8 text-slate-400">
+                            <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                            <p className="text-sm">No hay usuarios registrados</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Añadir usuario existente */}
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                    <Shield className="w-5 h-5 text-amber-600" />
+                    <h3 className="font-black text-amber-800 dark:text-amber-300">Asignar Rol a Usuario Existente</h3>
+                </div>
+                <p className="text-xs text-amber-700 dark:text-amber-400 mb-4">Si el usuario ya tiene cuenta en Supabase, puedes registrarlo en este panel con su nombre, apellido y rol.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="text" value={assignFirstName} onChange={(e) => setAssignFirstName(e.target.value)} placeholder="Nombre" className="px-4 py-2 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-sm" />
+                    <input type="text" value={assignLastName} onChange={(e) => setAssignLastName(e.target.value)} placeholder="Apellido" className="px-4 py-2 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-sm" />
+                    <input type="email" value={assignEmail} onChange={(e) => setAssignEmail(e.target.value)} placeholder="email@existente.com" className="sm:col-span-2 px-4 py-2 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-sm" />
+                </div>
+                <div className="flex gap-2 mt-2">
+                    <select value={assignRole} onChange={(e) => setAssignRole(e.target.value as UserRole)} className="px-3 py-2 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-sm">
+                        <option value="reader">Lector</option>
+                        <option value="editor">Editor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button onClick={handleAddExistingUser} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-sm">Anadir</button>
+                </div>
+            </div>
+
+            {/* Auditoría */}
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-3">
+                    <Clock3 className="w-5 h-5 text-indigo-500" />
+                    <h3 className="font-black text-slate-900 dark:text-white">Auditoría reciente</h3>
+                </div>
+                <div className="space-y-2 max-h-56 overflow-y-auto custom-scrollbar">
+                    {adminAuditEntries.length === 0 && (
+                        <p className="text-xs text-slate-500">Sin eventos registrados.</p>
+                    )}
+                    {adminAuditEntries.map((entry) => (
+                        <div key={entry.id} className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                {entry.action} {entry.target ? `· ${entry.target}` : ''}
+                            </p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{entry.details || 'Sin detalle'}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                                {new Date(entry.timestamp).toLocaleString('es-CL')}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </>
+    );
+
+    // -----------------------------------------------------------------------
+    // Alerts block (used by both modes)
+    // -----------------------------------------------------------------------
+    const renderAlerts = () => (
+        <>
+            {error && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+                    <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600"><X size={16} /></button>
+                </div>
+            )}
+            {success && (
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-emerald-700 dark:text-emerald-400">{success}</p>
+                    <button onClick={() => setSuccess(null)} className="ml-auto text-emerald-400 hover:text-emerald-600"><X size={16} /></button>
+                </div>
+            )}
+        </>
+    );
+
+    // -----------------------------------------------------------------------
+    // Render
+    // -----------------------------------------------------------------------
+    if (mode !== 'inline' && !isOpen) return null;
+
+    // Inline mode: render just the content, no modal wrapper
+    if (mode === 'inline') {
+        return (
+            <div className="space-y-6">
+                {renderAlerts()}
+                {renderContent()}
+            </div>
+        );
+    }
+
+    // Modal mode (original)
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                            <Settings className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-black text-white">Panel de Administración</h2>
+                            <p className="text-xs text-white/70">Gestión de usuarios y roles</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                        <X className="w-5 h-5 text-white" />
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {renderAlerts()}
+                    {renderContent()}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AdminPanel;
+
