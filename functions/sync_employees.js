@@ -130,6 +130,8 @@ async function sync() {
         if (!emp.Rut) continue;
 
         const rut = emp.Rut.trim();
+        const docId = rut.replace(/\./g, '').replace(/-/g, '').toLowerCase(); // Normalize RUT for ID
+
         const employeeData = {
             firstName: emp.Nombres || '',
             lastNamePaternal: emp['Primer Apellido'] || '',
@@ -151,25 +153,20 @@ async function sync() {
             totalSickLeaveDays: 0,
             usedSickLeaveDays: 0,
             jefaturaNombre: '',
-            jefaturaEmail: ''
+            jefaturaEmail: '',
+            id: docId
         };
 
-        if (existingEmployees[rut]) {
-            // Complement existing employee
-            const existing = existingEmployees[rut];
-            const docRef = db.collection(COLLECTION_NAME).doc(existing.id);
+        const docRef = db.collection(COLLECTION_NAME).doc(docId);
+        const docSnap = await docRef.get();
 
-            // Only update fields that are empty or different, but here we "complement" 
-            // which usually means overwrite with newer info from the source of truth
-            await docRef.update(employeeData);
+        if (docSnap.exists) {
+            // Update existing with merge to preserve fields not in CSV (like manual adjustments)
+            await docRef.set(employeeData, { merge: true });
             updated++;
         } else {
             // Add new employee
-            const id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-            await db.collection(COLLECTION_NAME).doc(id).set({
-                ...employeeData,
-                id: id
-            });
+            await docRef.set(employeeData);
             added++;
         }
     }

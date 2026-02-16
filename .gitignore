@@ -1,2 +1,21 @@
 node_modules
+.env
 .env.local
+.env.*
+dist
+build
+coverage
+.firebase
+.firebaserc
+# Ignore firebase log files
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+
+# Ignore OS files
+.DS_Store
+
+# Ignore temporary files
+to_delete.txt
+*.local

@@ -13,7 +13,8 @@ export interface Employee {
 }
 
 export interface PermitRecord {
-  id: string;
+  id: string; // ID del documento Firestore
+  employeeId?: string; // ID del funcionario en el sistema HR
   solicitudType: SolicitudType;
   decreto: string;
   materia: string;

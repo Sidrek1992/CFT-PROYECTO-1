@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { PermitFormData, PermitRecord, Employee, SolicitudType } from '../types';
+import { PermitFormData, PermitRecord, EmployeeExtended as Employee, SolicitudType } from '../types';
 import { JORNADA_OPTIONS, SOLICITUD_TYPES } from '../constants';
 import { validateRut, validateDate, CONFIG } from '../config';
 import {
@@ -70,6 +69,7 @@ const PermitForm: React.FC<PermitFormProps> = ({
     acto: nextCorrelatives.PA,
     funcionario: '',
     rut: '',
+    employeeId: '',
     periodo: currentYear.toString(),
     cantidadDias: 1,
     fechaInicio: '',
@@ -213,16 +213,22 @@ const PermitForm: React.FC<PermitFormProps> = ({
 
   const selectEmployee = (emp: Employee) => {
     const formattedRut = formatRut(emp.rut);
-    setFormData(prev => ({ ...prev, funcionario: toProperCase(emp.nombre), rut: formattedRut }));
+    const fullName = `${emp.firstName} ${emp.lastNamePaternal} ${emp.lastNameMaternal}`.trim();
+    setFormData(prev => ({
+      ...prev,
+      funcionario: toProperCase(fullName),
+      rut: formattedRut,
+      employeeId: emp.id
+    }));
     setShowSuggestions(false);
     const rutError = validateField('rut', formattedRut);
     setErrors(prev => ({ ...prev, rut: rutError }));
   };
 
-  const filteredEmployees = employees.filter(e =>
-    e.nombre.toLowerCase().includes(formData.funcionario.toLowerCase()) ||
-    e.rut.includes(formData.funcionario)
-  );
+  const filteredEmployees = employees.filter(e => {
+    const fullName = `${e.firstName} ${e.lastNamePaternal} ${e.lastNameMaternal}`.toLowerCase();
+    return fullName.includes(formData.funcionario.toLowerCase()) || e.rut.includes(formData.funcionario);
+  });
 
   const saldoFinal = (formData.diasHaber - formData.cantidadDias).toFixed(1);
   const isNegative = parseFloat(saldoFinal) < 0;
@@ -520,7 +526,7 @@ const PermitForm: React.FC<PermitFormProps> = ({
                                   <User className="w-5 h-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[13px] font-black text-slate-800 dark:text-white group-hover/item:text-[#2F4DAA] dark:group-hover/item:text-blue-400 transition-colors uppercase whitespace-nowrap overflow-hidden text-ellipsis">{emp.nombre}</p>
+                                  <p className="text-[13px] font-black text-slate-800 dark:text-white group-hover/item:text-[#2F4DAA] dark:group-hover/item:text-blue-400 transition-colors uppercase whitespace-nowrap overflow-hidden text-ellipsis">{emp.firstName} {emp.lastNamePaternal} {emp.lastNameMaternal}</p>
                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Cédula: {emp.rut}</p>
                                 </div>
                                 <CheckCircle2 className="w-5 h-5 text-emerald-500 opacity-0 group-hover/item:opacity-100 transition-all transform scale-50 group-hover/item:scale-100" />

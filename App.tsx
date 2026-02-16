@@ -310,6 +310,13 @@ const AppContent: React.FC = () => {
     try { localStorage.setItem('gdp_unified_config_v2', JSON.stringify(appConfig)); } catch { /* ignore */ }
   }, [appConfig]);
 
+  // Sync hrEmployees with Decretos and Requests
+  useEffect(() => {
+    if (hrEmployees.length > 0 && (records.length > 0 || hrRequests.length > 0)) {
+      setHrEmployees(prev => recalculateEmployeeUsage(prev, hrRequests, records, getOperationalYear()));
+    }
+  }, [records, hrRequests, setHrEmployees]);
+
   // Independent correlatives for PA and FL
   const nextCorrelatives = useMemo(() => {
     const year = new Date().getFullYear();
@@ -553,6 +560,7 @@ const AppContent: React.FC = () => {
         setHrEmployees(currEmps => recalculateEmployeeUsage(
           currEmps.filter(emp => emp.id !== id),
           nextRequests,
+          records,
           getOperationalYear()
         ));
         return nextRequests;
@@ -564,7 +572,7 @@ const AppContent: React.FC = () => {
   const updateRequestStatus = (id: string, status: LeaveStatus) => {
     setHrRequests(curr => {
       const next = curr.map(req => req.id === id ? { ...req, status } : req);
-      setHrEmployees(currEmps => recalculateEmployeeUsage(currEmps, next, getOperationalYear()));
+      setHrEmployees(currEmps => recalculateEmployeeUsage(currEmps, next, records, getOperationalYear()));
       return next;
     });
     addNotification(`Solicitud ${status === LeaveStatus.APPROVED ? 'aprobada' : 'rechazada'}`, status === LeaveStatus.APPROVED ? 'success' : 'info');
@@ -578,7 +586,7 @@ const AppContent: React.FC = () => {
     };
     setHrRequests(curr => {
       const next = [newRequest, ...curr];
-      setHrEmployees(currEmps => recalculateEmployeeUsage(currEmps, next, getOperationalYear()));
+      setHrEmployees(currEmps => recalculateEmployeeUsage(currEmps, next, records, getOperationalYear()));
       return next;
     });
     addNotification('Solicitud creada correctamente', 'success');
@@ -604,7 +612,7 @@ const AppContent: React.FC = () => {
   const handleImportData = (data: { employees: EmployeeExtended[], requests: LeaveRequest[], config: AppConfig }) => {
     setHrRequests(data.requests || hrRequests);
     setAppConfig(data.config || appConfig);
-    setHrEmployees(recalculateEmployeeUsage(data.employees || hrEmployees, data.requests || hrRequests, getOperationalYear()));
+    setHrEmployees(recalculateEmployeeUsage(data.employees || hrEmployees, data.requests || hrRequests, records, getOperationalYear()));
     addNotification('Datos importados correctamente', 'success');
   };
 
@@ -677,7 +685,7 @@ const AppContent: React.FC = () => {
                   editingRecord={editingRecord}
                   onCancelEdit={() => setEditingRecord(null)}
                   nextCorrelatives={nextCorrelatives}
-                  employees={employees}
+                  employees={hrEmployees}
                   records={records}
                   requestedSolicitudType={requestedSolicitudType}
                   onRequestedSolicitudTypeHandled={() => setRequestedSolicitudType(null)}
