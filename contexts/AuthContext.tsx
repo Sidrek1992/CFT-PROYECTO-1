@@ -137,10 +137,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const signIn = async (email: string, password: string) => {
         const normalizedEmail = email.trim().toLowerCase();
 
-        // Fallback al API local si Supabase no está configurado
-        const isSupabasePlaceholder = import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') || !import.meta.env.VITE_SUPABASE_URL;
+        // Usar Firebase si la API Key está configurada, de lo contrario usar fallback local
+        const isFirebaseConfigured = !!import.meta.env.VITE_FIREBASE_API_KEY && !import.meta.env.VITE_FIREBASE_API_KEY.includes('placeholder');
 
-        if (isSupabasePlaceholder) {
+        if (!isFirebaseConfigured) {
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
