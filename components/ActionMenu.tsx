@@ -69,32 +69,34 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ record, onEdit, onDelete, onGen
         <div className="relative" ref={menuRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="p-2.5 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all active:scale-90"
+                className="p-2 bg-slate-50 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-all active:scale-95"
             >
-                <MoreVertical size={16} />
+                <MoreVertical size={18} />
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                    {actions.map((action, index) => (
-                        <React.Fragment key={index}>
-                            {action.divider && (
-                                <div className="border-t border-slate-100 dark:border-slate-700 my-1" />
-                            )}
-                            <button
-                                onClick={() => {
-                                    action.onClick();
-                                    setIsOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${action.bg}`}
-                            >
-                                <action.icon className={`w-4 h-4 ${action.color}`} />
-                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                    {action.label}
-                                </span>
-                            </button>
-                        </React.Fragment>
-                    ))}
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-[0px_10px_40px_rgba(0,0,0,0.08)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="p-1.5">
+                        {actions.map((action, index) => (
+                            <React.Fragment key={index}>
+                                {action.divider && (
+                                    <div className="border-t border-slate-50 dark:border-slate-700 my-1 mx-2" />
+                                )}
+                                <button
+                                    onClick={() => {
+                                        action.onClick();
+                                        setIsOpen(false);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-xl transition-all ${action.bg}`}
+                                >
+                                    <action.icon className={`w-4 h-4 ${action.color}`} />
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                        {action.label}
+                                    </span>
+                                </button>
+                            </React.Fragment>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

@@ -20,19 +20,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout
   ];
 
   return (
-    <div className="flex flex-col w-full h-full bg-slate-900 dark:bg-slate-950 text-white overflow-y-auto">
-      <div className="p-6 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${isSyncing ? 'bg-indigo-600 animate-pulse' : 'bg-gradient-to-br from-indigo-500 to-purple-600'}`}>
-            <Cloud className="text-white w-5 h-5" />
+    <div className="flex flex-col w-full h-full bg-[#1A2B56] text-white overflow-y-auto font-['Source_Sans_Pro']">
+      <div className="p-8 border-b border-white/5">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg ${isSyncing ? 'bg-indigo-500 animate-pulse' : 'bg-[#2F4DAA] ring-4 ring-white/5'}`}>
+            <span className="text-xl font-bold text-white tracking-tighter italic">GDP</span>
           </div>
-          <div>
-            <h1 className="text-lg font-extrabold tracking-tight">GDP Cloud</h1>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest">Gestion de Personas</p>
+          <div className="mt-1">
+            <h1 className="text-xl font-bold tracking-tight">GDP Cloud</h1>
+            <p className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-medium">Gestión de Personas</p>
           </div>
         </div>
       </div>
-      <nav className="flex-1 p-4 space-y-2" aria-label="Menú principal">
+      <nav className="flex-1 p-3 space-y-1" aria-label="Menú principal">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
@@ -40,42 +40,49 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout
             <button
               key={item.id}
               onClick={() => setView(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                ? item.special
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/50'
-                  : 'bg-slate-800 text-white shadow-md'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
+                ? 'bg-white/10 text-white shadow-sm'
+                : 'text-white/60 hover:bg-white/5 hover:text-white'
                 }`}
               aria-current={isActive ? 'page' : undefined}
               aria-label={`Ir a ${item.label}`}
             >
-              <Icon size={20} className={item.special ? 'text-yellow-200' : ''} aria-hidden="true" />
-              <span className="font-medium">{item.label}</span>
+              <Icon size={18} aria-hidden="true" />
+              <span className="font-semibold text-sm">{item.label}</span>
+              {isActive && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-400" />
+              )}
             </button>
           );
         })}
       </nav>
-      <div className="p-4 border-t border-slate-800 space-y-2">
+      <div className="p-4 border-t border-white/5 space-y-2">
         <button
           onClick={() => setView('settings')}
-          className={`flex items-center gap-3 px-4 py-3 w-full transition-colors rounded-lg ${currentView === 'settings'
-            ? 'bg-slate-800 text-white shadow-md'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          className={`flex items-center gap-3 px-4 py-3 w-full transition-all rounded-xl ${currentView === 'settings'
+            ? 'bg-white/10 text-white shadow-sm'
+            : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           aria-current={currentView === 'settings' ? 'page' : undefined}
           aria-label="Ir a Configuración"
         >
-          <Settings size={20} aria-hidden="true" />
-          <span>Configuración</span>
+          <Settings size={18} aria-hidden="true" />
+          <span className="font-bold text-sm">Configuración</span>
         </button>
         <button
           onClick={onLogout}
-          className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 hover:text-rose-200 hover:bg-rose-900/20 transition-colors rounded-lg"
+          className="flex items-center gap-3 px-4 py-3 w-full text-white/30 hover:text-rose-400 hover:bg-rose-400/5 transition-all rounded-xl"
           aria-label="Cerrar sesión"
         >
-          <LogOut size={20} aria-hidden="true" />
-          <span>Cerrar Sesión</span>
+          <LogOut size={18} aria-hidden="true" />
+          <span className="font-bold text-sm">Cerrar Sesión</span>
         </button>
+
+        <div className="mt-8 pt-6 border-t border-white/5 text-center px-4">
+          <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">
+            GDP Cloud v1.0
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -78,28 +78,28 @@ const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, reco
             className="fixed inset-0 z-[150] flex items-center justify-center p-4"
             onClick={onClose}
         >
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-[#1A2B56]/40 backdrop-blur-[2px]" />
 
             <div
-                className="relative w-full max-w-2xl max-h-[85vh] bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                className="relative w-full max-w-2xl max-h-[85vh] bg-white dark:bg-slate-800 rounded-[32px] shadow-[0px_20px_60px_rgba(26,43,86,0.15)] overflow-hidden flex flex-col border border-slate-50 dark:border-slate-700 animate-scale-in"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 sm:p-8 text-white relative overflow-hidden flex-shrink-0">
-                    <div className="absolute top-0 right-0 p-4 opacity-20 scale-150 pointer-events-none">
-                        <AlertTriangle size={100} />
+                <div className="bg-[#2F4DAA] p-8 text-white relative overflow-hidden flex-shrink-0">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 scale-150 pointer-events-none">
+                        <TrendingDown size={120} />
                     </div>
 
                     <div className="flex items-center justify-between z-10 relative">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md shadow-lg">
-                                <TrendingDown className="w-6 h-6" />
+                        <div className="flex items-center gap-5">
+                            <div className="p-3.5 bg-white/10 rounded-2xl backdrop-blur-md shadow-xl ring-1 ring-white/10">
+                                <AlertTriangle className="w-6 h-6 text-[#F59121]" />
                             </div>
                             <div>
-                                <h2 className="text-lg sm:text-xl font-extrabold uppercase tracking-tight">
+                                <h2 className="text-xl font-bold tracking-tight">
                                     Alerta de Saldo Bajo
                                 </h2>
-                                <p className="text-[10px] sm:text-[11px] font-bold uppercase opacity-80 tracking-wider mt-1">
+                                <p className="text-[11px] font-medium uppercase opacity-70 tracking-widest mt-1">
                                     {lowBalanceEmployees.length} funcionarios con menos de 2 días
                                 </p>
                             </div>
@@ -107,7 +107,7 @@ const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, reco
 
                         <button
                             onClick={onClose}
-                            className="p-2.5 hover:bg-white/20 rounded-xl transition-all border border-white/20"
+                            className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-white/70 hover:text-white"
                         >
                             <X className="w-5 h-5" />
                         </button>
@@ -115,51 +115,51 @@ const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, reco
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
                     {lowBalanceEmployees.length === 0 ? (
-                        <div className="py-16 text-center">
-                            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <TrendingDown className="w-8 h-8 text-emerald-500" />
+                        <div className="py-20 text-center">
+                            <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-[24px] flex items-center justify-center mx-auto mb-6">
+                                <TrendingDown className="w-10 h-10 text-emerald-500" />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
                                 ¡Todo en orden!
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                                 No hay funcionarios con saldo bajo en este momento.
                             </p>
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {lowBalanceEmployees.map((emp, i) => (
                                 <div
                                     key={emp.rut}
-                                    className="bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-600"
+                                    className="bg-slate-50 dark:bg-slate-700/30 rounded-[20px] p-5 border border-slate-100 dark:border-slate-600 group transition-all hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-none"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-white dark:bg-slate-600 rounded-xl flex items-center justify-center shadow-sm">
-                                            <User className="w-5 h-5 text-slate-400" />
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-12 h-12 bg-white dark:bg-slate-600 rounded-2xl flex items-center justify-center shadow-sm border border-slate-50 group-hover:bg-[#2F4DAA] group-hover:text-white transition-all">
+                                            <User className="w-6 h-6 text-slate-400 group-hover:text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-black text-slate-800 dark:text-white uppercase truncate">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white uppercase truncate">
                                                 {emp.nombre}
                                             </p>
-                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 font-mono">
+                                            <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 font-mono mt-0.5">
                                                 {emp.rut}
                                             </p>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-3">
                                             {emp.saldoPA !== null && emp.saldoPA < 2 && (
-                                                <div className={`px-3 py-2 rounded-xl text-center ${getSaldoBg(emp.saldoPA)}`}>
-                                                    <p className="text-[9px] font-black text-slate-400 uppercase">PA</p>
-                                                    <p className={`text-lg font-black ${getSaldoColor(emp.saldoPA)}`}>
+                                                <div className={`px-4 py-2.5 rounded-2xl text-center min-w-[64px] ${getSaldoBg(emp.saldoPA)}`}>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">PA</p>
+                                                    <p className={`text-xl font-bold ${getSaldoColor(emp.saldoPA)}`}>
                                                         {emp.saldoPA.toFixed(1)}
                                                     </p>
                                                 </div>
                                             )}
                                             {emp.saldoFL !== null && emp.saldoFL < 2 && (
-                                                <div className={`px-3 py-2 rounded-xl text-center ${getSaldoBg(emp.saldoFL)}`}>
-                                                    <p className="text-[9px] font-black text-slate-400 uppercase">FL</p>
-                                                    <p className={`text-lg font-black ${getSaldoColor(emp.saldoFL)}`}>
+                                                <div className={`px-4 py-2.5 rounded-2xl text-center min-w-[64px] ${getSaldoBg(emp.saldoFL)}`}>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">FL</p>
+                                                    <p className={`text-xl font-bold ${getSaldoColor(emp.saldoFL)}`}>
                                                         {emp.saldoFL.toFixed(1)}
                                                     </p>
                                                 </div>
@@ -173,9 +173,9 @@ const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, reco
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
-                    <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
-                        Los funcionarios listados tienen menos de 2 días disponibles
+                <div className="p-6 border-t border-slate-50 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
+                        Los funcionarios listados tienen menos de 2 días hábiles disponibles
                     </p>
                 </div>
             </div>

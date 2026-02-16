@@ -31,7 +31,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     if (isOpen) {
       // Guardar el elemento que tenía el foco
       previousFocusRef.current = document.activeElement as HTMLElement;
-      
+
       // Enfocar el botón de confirmar después de que se monte
       setTimeout(() => {
         confirmButtonRef.current?.focus();
@@ -91,21 +91,21 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const variantStyles = {
     danger: {
       icon: Trash2,
-      iconBg: 'bg-red-100 dark:bg-red-900/50',
-      iconColor: 'text-red-600 dark:text-red-400',
-      confirmBg: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
+      iconBg: 'bg-red-50 dark:bg-red-900/30',
+      iconColor: 'text-red-500 dark:text-red-400',
+      confirmBg: 'bg-red-500 hover:bg-red-600 focus:ring-red-400',
     },
     warning: {
       icon: AlertTriangle,
-      iconBg: 'bg-amber-100 dark:bg-amber-900/50',
-      iconColor: 'text-amber-600 dark:text-amber-400',
-      confirmBg: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
+      iconBg: 'bg-orange-50 dark:bg-orange-900/30',
+      iconColor: 'text-[#F59121] dark:text-orange-400',
+      confirmBg: 'bg-[#F59121] hover:bg-orange-600 focus:ring-orange-400',
     },
     info: {
       icon: AlertTriangle,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/50',
-      iconColor: 'text-blue-600 dark:text-blue-400',
-      confirmBg: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
+      iconBg: 'bg-blue-50 dark:bg-blue-900/30',
+      iconColor: 'text-[#2F4DAA] dark:text-blue-400',
+      confirmBg: 'bg-[#2F4DAA] hover:bg-[#253D88] focus:ring-blue-400',
     },
   };
 
@@ -123,34 +123,34 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       aria-describedby="confirm-modal-description"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-[#1A2B56]/40 backdrop-blur-[2px]" />
 
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-scale-in"
+        className="relative w-full max-w-sm bg-white dark:bg-slate-800 rounded-[32px] shadow-[0px_20px_60px_rgba(26,43,86,0.15)] overflow-hidden animate-scale-in border border-slate-50 dark:border-slate-700"
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          className="absolute top-6 right-6 p-2 text-slate-300 hover:text-slate-500 dark:hover:text-slate-200 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
           aria-label="Cerrar modal"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Content */}
-        <div className="p-6 pt-8">
+        <div className="p-8 pt-10">
           <div className="flex flex-col items-center text-center">
             {/* Icon */}
-            <div className={`w-16 h-16 ${styles.iconBg} rounded-full flex items-center justify-center mb-4`}>
-              <Icon className={`w-8 h-8 ${styles.iconColor}`} />
+            <div className={`w-20 h-20 ${styles.iconBg} rounded-[24px] flex items-center justify-center mb-6`}>
+              <Icon className={`w-10 h-10 ${styles.iconColor}`} />
             </div>
 
             {/* Title */}
             <h2
               id="confirm-modal-title"
-              className="text-xl font-bold text-slate-900 dark:text-white mb-2"
+              className="text-2xl font-bold text-slate-800 dark:text-white mb-3"
             >
               {title}
             </h2>
@@ -158,25 +158,25 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             {/* Message */}
             <p
               id="confirm-modal-description"
-              className="text-sm text-slate-600 dark:text-slate-400 mb-6"
+              className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8 leading-relaxed"
             >
               {message}
             </p>
 
             {/* Actions */}
-            <div className="flex gap-3 w-full">
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
-              >
-                {cancelText}
-              </button>
+            <div className="flex flex-col gap-3 w-full">
               <button
                 ref={confirmButtonRef}
                 onClick={handleConfirm}
-                className={`flex-1 px-4 py-3 ${styles.confirmBg} text-white font-bold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 active:scale-95`}
+                className={`w-full py-4 ${styles.confirmBg} text-white font-bold rounded-2xl shadow-lg shadow-blue-900/10 transition-all active:scale-95 text-xs uppercase tracking-widest`}
               >
                 {confirmText}
+              </button>
+              <button
+                onClick={onClose}
+                className="w-full py-4 bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-300 font-bold rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-all text-xs uppercase tracking-widest"
+              >
+                {cancelText}
               </button>
             </div>
           </div>

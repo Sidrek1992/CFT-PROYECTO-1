@@ -43,12 +43,12 @@ const DecreeBookModal: React.FC<DecreeBookModalProps> = ({ isOpen, onClose, reco
       <body><h1>Libro de Decretos - ${months[selectedMonth]} ${selectedYear}</h1>
       <table><tr><th>N°</th><th>Tipo</th><th>Funcionario</th><th>RUT</th><th>Días</th><th>Fecha</th><th>Saldo</th></tr>
       ${filteredRecords.map(r => {
-        const saldoFinal = r.solicitudType === 'FL'
-          ? getFLSaldoFinal(r, 0)
-          : (r.diasHaber - r.cantidadDias);
-        return `<tr><td>${r.acto}</td><td>${r.solicitudType}</td><td>${r.funcionario}</td><td>${r.rut}</td>
+            const saldoFinal = r.solicitudType === 'FL'
+                ? getFLSaldoFinal(r, 0)
+                : (r.diasHaber - r.cantidadDias);
+            return `<tr><td>${r.acto}</td><td>${r.solicitudType}</td><td>${r.funcionario}</td><td>${r.rut}</td>
       <td>${r.cantidadDias}</td><td>${formatNumericDate(r.fechaInicio)}</td><td>${Number(saldoFinal).toFixed(1)}</td></tr>`;
-      }).join('')}
+        }).join('')}
       </table></body></html>`;
         w.document.write(html);
         w.document.close();
@@ -59,48 +59,109 @@ const DecreeBookModal: React.FC<DecreeBookModalProps> = ({ isOpen, onClose, reco
 
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <div className="relative w-full max-w-3xl max-h-[85vh] bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 text-white flex items-center justify-between">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
-                        <div>
-                            <h2 className="text-base sm:text-lg font-bold">Libro de Decretos</h2>
-                            <p className="text-[10px] sm:text-xs opacity-80">Resumen mensual</p>
-                        </div>
+            <div className="absolute inset-0 bg-[#1A2B56]/40 backdrop-blur-[2px]" />
+            <div className="relative w-full max-w-3xl max-h-[85vh] bg-white dark:bg-slate-800 rounded-[32px] shadow-[0px_20px_60px_rgba(26,43,86,0.15)] overflow-hidden flex flex-col border border-slate-50 dark:border-slate-700 animate-scale-in" onClick={e => e.stopPropagation()}>
+
+                {/* Header */}
+                <div className="bg-[#2F4DAA] p-6 sm:p-8 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 scale-150 pointer-events-none">
+                        <FileText size={120} />
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-xl"><X /></button>
+                    <div className="flex items-center justify-between z-10 relative">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md ring-1 ring-white/10 shadow-xl">
+                                <FileText className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold tracking-tight">Libro de Decretos</h2>
+                                <p className="text-[11px] font-medium uppercase opacity-70 tracking-widest mt-1">Resumen Mensual de Actos Administrativos</p>
+                            </div>
+                        </div>
+                        <button onClick={onClose} className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-white/70 hover:text-white">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
-                <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-700 flex flex-wrap gap-2 sm:gap-3 items-center">
-                    <select value={selectedYear} onChange={e => setSelectedYear(+e.target.value)} className="px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-50 dark:bg-slate-700 border rounded-xl text-xs sm:text-sm font-bold">
-                        {years.map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                    <select value={selectedMonth} onChange={e => setSelectedMonth(+e.target.value)} className="px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-50 dark:bg-slate-700 border rounded-xl text-xs sm:text-sm font-bold">
-                        {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                    </select>
-                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+
+                {/* Filters */}
+                <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-700 flex flex-wrap gap-4 items-center bg-slate-50/50">
+                    <div className="flex gap-3">
+                        <select
+                            value={selectedYear}
+                            onChange={e => setSelectedYear(+e.target.value)}
+                            className="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-[12px] text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F4DAA]/20 transition-all shadow-sm"
+                        >
+                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                        <select
+                            value={selectedMonth}
+                            onChange={e => setSelectedMonth(+e.target.value)}
+                            className="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-[12px] text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F4DAA]/20 transition-all shadow-sm"
+                        >
+                            {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="flex gap-1 bg-white dark:bg-slate-700 p-1 rounded-[14px] border border-slate-200 dark:border-slate-600 shadow-sm">
                         {(['ALL', 'PA', 'FL'] as const).map(t => (
-                            <button key={t} onClick={() => setSelectedType(t)} className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-xs font-bold ${selectedType === t ? 'bg-white dark:bg-slate-600 text-indigo-600' : 'text-slate-500'}`}>
+                            <button
+                                key={t}
+                                onClick={() => setSelectedType(t)}
+                                className={`px-4 py-1.5 rounded-[10px] text-[10px] sm:text-xs font-bold transition-all ${selectedType === t ? 'bg-[#2F4DAA] text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
+                            >
                                 {t === 'ALL' ? 'Todos' : t}
                             </button>
                         ))}
                     </div>
+
                     <div className="flex-1" />
-                    <button onClick={handlePrint} disabled={!filteredRecords.length} className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold disabled:opacity-50">
-                        <Printer size={14} className="sm:hidden" /><Printer size={16} className="hidden sm:block" /> Imprimir
+
+                    <button
+                        onClick={handlePrint}
+                        disabled={!filteredRecords.length}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-[#F59121] text-white rounded-[12px] text-xs font-bold disabled:opacity-50 hover:bg-[#e6841b] transition-all shadow-lg shadow-orange-500/10 uppercase tracking-widest"
+                    >
+                        <Printer size={16} />
+                        <span className="hidden sm:inline">Imprimir Libro</span>
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4">
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar">
                     {filteredRecords.length === 0 ? (
-                        <div className="py-12 text-center text-slate-400"><Calendar className="w-10 h-10 mx-auto mb-3" />Sin decretos</div>
+                        <div className="py-24 text-center">
+                            <div className="w-20 h-20 bg-slate-50 dark:bg-slate-700/50 rounded-[28px] flex items-center justify-center mx-auto mb-6">
+                                <Calendar className="w-10 h-10 text-slate-300" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No se encontraron decretos</h3>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No hay registros para este mes y año seleccionados.</p>
+                        </div>
                     ) : (
-                        <div className="grid grid-cols-3 gap-3 mb-4 text-center">
-                            <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3"><p className="text-xl font-bold">{filteredRecords.length}</p><p className="text-[10px] text-slate-400">Decretos</p></div>
-                            <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3"><p className="text-xl font-bold">{filteredRecords.reduce((a, r) => a + r.cantidadDias, 0)}</p><p className="text-[10px] text-slate-400">Días</p></div>
-                            <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3"><p className="text-xl font-bold">{new Set(filteredRecords.map(r => r.rut)).size}</p><p className="text-[10px] text-slate-400">Funcionarios</p></div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                            <div className="bg-slate-50 dark:bg-slate-700/30 rounded-[20px] p-6 border border-slate-100 dark:border-slate-600 text-center group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all">
+                                <p className="text-3xl font-bold text-[#2F4DAA] dark:text-blue-400 mb-1">{filteredRecords.length}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Decretos Generados</p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-700/30 rounded-[20px] p-6 border border-slate-100 dark:border-slate-600 text-center group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all">
+                                <p className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{filteredRecords.reduce((a, r) => a + r.cantidadDias, 0)}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Días Autorizados</p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-700/30 rounded-[20px] p-6 border border-slate-100 dark:border-slate-600 text-center group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all">
+                                <p className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{new Set(filteredRecords.map(r => r.rut)).size}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Funcionarios Beneficiarios</p>
+                            </div>
                         </div>
                     )}
                 </div>
+
+                {/* Footer Info */}
+                {filteredRecords.length > 0 && (
+                    <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50/30">
+                        <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest">
+                            Mostrando registros correlativos ordenados por número de acto
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

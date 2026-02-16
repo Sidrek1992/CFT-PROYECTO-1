@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PermitRecord } from '../types';
-import { ChevronLeft, ChevronRight, Calendar, X, FileText, Search, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, X, FileText, Search, RotateCcw, Hash, Clock } from 'lucide-react';
 
 interface CalendarViewProps {
     isOpen: boolean;
@@ -125,46 +125,44 @@ const CalendarView: React.FC<CalendarViewProps> = ({ isOpen, onClose, records })
 
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <div className="relative w-full max-w-5xl max-h-[92vh] bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="absolute inset-0 bg-[#1A2B56]/40 backdrop-blur-[2px]" />
+            <div className="relative w-full max-w-5xl max-h-[92vh] bg-white dark:bg-slate-800 rounded-[32px] shadow-[0px_20px_60px_rgba(26,43,86,0.15)] overflow-hidden flex flex-col border border-slate-50 dark:border-slate-700 animate-scale-in" onClick={e => e.stopPropagation()}>
 
                 {/* ─── Header ─── */}
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-5 sm:p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white/20 backdrop-blur p-2 rounded-xl">
-                                <Calendar className="w-5 h-5" />
+                <div className="bg-[#2F4DAA] p-6 sm:p-8 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 scale-150 pointer-events-none">
+                        <Calendar size={120} />
+                    </div>
+                    <div className="flex items-center justify-between z-10 relative">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md ring-1 ring-white/10 shadow-xl">
+                                <Calendar className="w-6 h-6" />
                             </div>
                             <div>
-                                <h2 className="text-base sm:text-lg font-black">Calendario de Permisos</h2>
-                                <p className="text-[11px] opacity-70 font-bold uppercase tracking-wider">Vista mensual de decretos</p>
+                                <h2 className="text-xl font-bold tracking-tight">Calendario de Permisos</h2>
+                                <p className="text-[11px] font-medium uppercase opacity-70 tracking-widest mt-1">Vista Mensual y Programación de Decretos</p>
                             </div>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
+                        <button onClick={onClose} className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-white/70 hover:text-white">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
 
                 {/* ─── Filtros + Búsqueda ─── */}
-                <div className="px-4 sm:px-6 pt-4 pb-2 border-b border-slate-200 dark:border-slate-700 space-y-3">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                         {/* Filtro tipo */}
-                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-0.5 gap-0.5">
+                        <div className="flex bg-white dark:bg-slate-700 p-1 rounded-[14px] border border-slate-200 dark:border-slate-600 shadow-sm">
                             {(['todos', 'PA', 'FL'] as const).map(opt => {
                                 const labels: Record<string, string> = { todos: 'Todos', PA: 'PA', FL: 'FL' };
                                 const active = typeFilter === opt;
-                                const colors: Record<string, string> = {
-                                    todos: active ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm' : '',
-                                    PA: active ? 'bg-indigo-600 text-white shadow-sm' : '',
-                                    FL: active ? 'bg-amber-500 text-white shadow-sm' : ''
-                                };
                                 return (
                                     <button
                                         key={opt}
                                         type="button"
                                         onClick={() => { setTypeFilter(opt); setSelectedDay(null); }}
-                                        className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${colors[opt]} ${!active ? 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' : ''}`}
+                                        className={`px-4 py-1.5 rounded-[10px] text-[10px] font-bold transition-all ${active ? 'bg-[#2F4DAA] text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
                                     >
                                         {labels[opt]}
                                     </button>
@@ -173,91 +171,81 @@ const CalendarView: React.FC<CalendarViewProps> = ({ isOpen, onClose, records })
                         </div>
 
                         {/* Búsqueda empleado */}
-                        <div className="relative">
-                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        <div className="relative group">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-[#2F4DAA] transition-colors" />
                             <input
                                 type="text"
-                                placeholder="Buscar empleado..."
+                                placeholder="Buscar funcionario..."
                                 value={employeeSearch}
                                 onChange={e => { setEmployeeSearch(e.target.value); setSelectedDay(null); }}
-                                className="pl-7 pr-3 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-[11px] font-bold text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:border-indigo-400 w-44"
+                                className="pl-10 pr-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-[12px] text-xs font-bold text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#2F4DAA]/10 focus:border-[#2F4DAA] w-56 shadow-sm transition-all"
                             />
+                        </div>
+                    </div>
+
+                    {/* Resumen mensual en linea */}
+                    <div className="flex items-center gap-4 bg-white dark:bg-slate-700 px-4 py-2 rounded-[14px] border border-slate-200 dark:border-slate-600 shadow-sm">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#2F4DAA]" />
+                            <span className="text-[11px] font-bold text-slate-500"><span className="text-[#2F4DAA]">{monthlySummary.countPA}</span> PA</span>
+                        </div>
+                        <div className="w-px h-3 bg-slate-200" />
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#F59121]" />
+                            <span className="text-[11px] font-bold text-slate-500"><span className="text-[#F59121]">{monthlySummary.countFL}</span> FL</span>
                         </div>
                     </div>
                 </div>
 
-                {/* ─── Resumen mensual ─── */}
-                <div className="px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-5 border-b border-slate-100 dark:border-slate-700 flex-wrap">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                        <span className="text-[11px] font-black text-slate-500 dark:text-slate-400">PA:</span>
-                        <span className="text-[11px] font-black text-indigo-600 dark:text-indigo-400">{monthlySummary.countPA} decretos</span>
-                        <span className="text-[10px] text-slate-400">({monthlySummary.totalPA} días)</span>
-                    </div>
-                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-600" />
-                    <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                        <span className="text-[11px] font-black text-slate-500 dark:text-slate-400">FL:</span>
-                        <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">{monthlySummary.countFL} decretos</span>
-                        <span className="text-[10px] text-slate-400">({monthlySummary.totalFL} días)</span>
-                    </div>
-                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-600" />
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
-                        Total: {monthlySummary.totalPA + monthlySummary.totalFL} días este mes
-                    </span>
-                </div>
-
                 {/* ─── Navigación mes/año ─── */}
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center gap-1">
-                        <button onClick={prevMonth} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
-                            <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                <div className="flex items-center justify-between px-8 py-5 border-b border-slate-50 dark:border-slate-700">
+                    <div className="flex items-center gap-2">
+                        <button onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all border border-slate-100 group">
+                            <ChevronLeft className="w-5 h-5 text-slate-400 group-hover:text-[#2F4DAA]" />
                         </button>
-                        <button onClick={nextMonth} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
-                            <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                        <button onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all border border-slate-100 group">
+                            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#2F4DAA]" />
                         </button>
                     </div>
 
-                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">
                         {monthNames[month]} {year}
                     </h3>
 
-                    <div className="flex items-center gap-2">
-                        {/* Selector de año */}
+                    <div className="flex items-center gap-3">
                         <select
                             value={year}
                             onChange={e => { setCurrentDate(new Date(Number(e.target.value), month, 1)); setSelectedDay(null); }}
-                            className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-[11px] font-black px-2 py-1 rounded-lg outline-none focus:border-indigo-400 cursor-pointer"
+                            className="bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold px-4 py-2 rounded-[12px] outline-none focus:ring-2 focus:ring-[#2F4DAA]/10 cursor-pointer shadow-sm"
                         >
                             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
-                        {/* Botón Hoy */}
                         <button
                             onClick={goToday}
-                            className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-[#2F4DAA] dark:text-blue-400 rounded-[12px] transition-all font-bold text-[11px] uppercase tracking-widest"
                         >
-                            <RotateCcw className="w-3 h-3" />
-                            <span className="text-[10px] font-black">Hoy</span>
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Hoy</span>
                         </button>
                     </div>
                 </div>
 
                 {/* ─── Grid del calendario ─── */}
-                <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3">
+                <div className="flex-1 overflow-y-auto px-8 py-4 custom-scrollbar">
                     {/* Headers días */}
-                    <div className="grid grid-cols-7 gap-1 mb-1.5 sticky top-0 bg-white dark:bg-slate-800 pb-1 z-10">
+                    <div className="grid grid-cols-7 gap-3 mb-4 sticky top-0 bg-white dark:bg-slate-800 pb-2 z-10 border-b border-slate-50">
                         {dayNames.map((name, i) => (
-                            <div key={name} className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider ${i === 0 || i === 6 ? 'text-red-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                            <div key={name} className={`text-center py-2 text-[10px] font-bold uppercase tracking-[0.2em] ${i === 0 || i === 6 ? 'text-orange-400' : 'text-slate-400 dark:text-slate-500'}`}>
                                 {name}
                             </div>
                         ))}
                     </div>
 
                     {/* Celdas */}
-                    <div className="grid grid-cols-7 gap-1">
+                    <div className="grid grid-cols-7 gap-3">
                         {/* Celldas vacías antes del 1 */}
                         {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                            <div key={`empty-${i}`} className="h-24 bg-slate-50 dark:bg-slate-800/40 rounded-lg" />
+                            <div key={`empty-${i}`} className="h-28 bg-transparent rounded-2xl border border-slate-50 opacity-20" />
                         ))}
 
                         {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -272,47 +260,41 @@ const CalendarView: React.FC<CalendarViewProps> = ({ isOpen, onClose, records })
                                     key={day}
                                     onClick={() => hasRecords ? setSelectedDay(isSelected ? null : day) : setSelectedDay(null)}
                                     className={[
-                                        'min-h-24 p-1.5 rounded-lg border transition-all',
-                                        isToday(day) ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : weekend ? 'border-transparent bg-red-50/40 dark:bg-red-900/8' : 'border-transparent bg-slate-50 dark:bg-slate-800/40',
-                                        hasRecords ? 'cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md' : '',
-                                        isSelected ? 'ring-2 ring-indigo-500 border-indigo-400' : ''
+                                        'min-h-28 p-2 rounded-2xl border transition-all relative group',
+                                        isToday(day) ? 'border-[#2F4DAA] bg-blue-50/30 shadow-sm' : weekend ? 'border-transparent bg-slate-50/50' : 'border-slate-50 bg-white dark:bg-slate-800/40',
+                                        hasRecords ? 'cursor-pointer hover:border-[#2F4DAA]/30 hover:shadow-xl hover:shadow-[#2F4DAA]/5 active:scale-[0.98]' : '',
+                                        isSelected ? 'ring-2 ring-[#2F4DAA] border-transparent shadow-xl' : ''
                                     ].join(' ')}
                                 >
                                     {/* Número del día */}
-                                    <div className={[
-                                        'text-[11px] font-black mb-0.5 px-0.5',
-                                        isToday(day) ? 'text-indigo-600 dark:text-indigo-400' : weekend ? 'text-red-400' : 'text-slate-600 dark:text-slate-300'
-                                    ].join(' ')}>
+                                    <div className="mb-2">
                                         {isToday(day) ? (
-                                            <span className="inline-flex items-center justify-center w-5 h-5 bg-indigo-600 text-white rounded-full text-[10px]">{day}</span>
-                                        ) : day}
+                                            <span className="inline-flex items-center justify-center w-6 h-6 bg-[#2F4DAA] text-white rounded-[10px] text-[11px] font-bold shadow-lg shadow-blue-500/20">{day}</span>
+                                        ) : (
+                                            <span className={`text-sm font-bold ${weekend ? 'text-orange-300' : 'text-slate-400'}`}>{day}</span>
+                                        )}
                                     </div>
 
                                     {/* Badges de permisos */}
                                     {hasRecords && (
-                                        <div className="space-y-0.5">
+                                        <div className="space-y-1">
                                             {dayRecords.slice(0, 3).map((entry, idx) => {
                                                 const isPA = entry.record.solicitudType === 'PA';
-                                                const bg = isPA ? 'bg-indigo-100 dark:bg-indigo-900/50' : 'bg-amber-100 dark:bg-amber-900/50';
-                                                const txt = isPA ? 'text-indigo-700 dark:text-indigo-300' : 'text-amber-700 dark:text-amber-300';
+                                                const bg = isPA ? 'bg-blue-50 dark:bg-blue-900/40 text-[#2F4DAA]' : 'bg-orange-50 dark:bg-orange-900/40 text-[#F59121]';
                                                 const radius = badgeRadius(entry.isStart, entry.isEnd);
-                                                // Si es medio de rango, añadir borde izquierdo coloreado
-                                                const midBorder = entry.isMid ? (isPA ? 'border-l-2 border-l-indigo-400' : 'border-l-2 border-l-amber-400') : '';
 
                                                 return (
                                                     <div
                                                         key={idx}
-                                                        className={`${bg} ${txt} ${radius} ${midBorder} text-[9px] px-1.5 py-0.5 truncate font-bold flex items-center gap-0.5`}
+                                                        className={`${bg} ${radius} text-[9px] px-2 py-1 truncate font-bold flex items-center gap-1 border border-transparent group-hover:border-current/10`}
                                                     >
-                                                        {entry.isStart && <span className="text-[7px] opacity-70">●</span>}
-                                                        {entry.isMid && <span className="text-[7px] opacity-50">─</span>}
-                                                        {entry.isEnd && !entry.isStart && <span className="text-[7px] opacity-70">◆</span>}
+                                                        {entry.isStart && <div className="w-1 h-1 rounded-full bg-current" />}
                                                         <span className="truncate">{entry.record.funcionario.split(' ')[0]}</span>
                                                     </div>
                                                 );
                                             })}
                                             {dayRecords.length > 3 && (
-                                                <div className="text-[9px] text-slate-400 dark:text-slate-500 font-black px-1">
+                                                <div className="text-[9px] text-[#2F4DAA] font-bold px-2 mt-1">
                                                     +{dayRecords.length - 3} más
                                                 </div>
                                             )}
@@ -326,49 +308,58 @@ const CalendarView: React.FC<CalendarViewProps> = ({ isOpen, onClose, records })
 
                 {/* ─── Panel detalle del día seleccionado ─── */}
                 {selectedDay && decreesByDay[selectedDay] && (
-                    <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
+                    <div className="border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900 animate-slide-up">
                         {/* Header del panel */}
-                        <div className="flex items-center justify-between px-4 sm:px-6 pt-3 pb-2">
-                            <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-indigo-500" />
+                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                            <h4 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-3">
+                                <div className="w-1.5 h-6 bg-[#F59121] rounded-full" />
                                 {dayNames[new Date(year, month, selectedDay).getDay()]} {selectedDay} de {monthNames[month]}
                             </h4>
-                            <span className="text-[10px] font-black text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-full">
-                                {decreesByDay[selectedDay].length} permiso{decreesByDay[selectedDay].length !== 1 ? 's' : ''}
+                            <span className="text-xs font-bold text-[#2F4DAA] bg-blue-50 dark:bg-blue-900/40 px-4 py-1.5 rounded-full uppercase tracking-widest">
+                                {decreesByDay[selectedDay].length} {decreesByDay[selectedDay].length === 1 ? 'permiso' : 'permisos'}
                             </span>
                         </div>
 
                         {/* Lista de permisos */}
-                        <div className="px-4 sm:px-6 pb-4 space-y-2 max-h-48 overflow-y-auto">
+                        <div className="px-8 pb-8 space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
                             {decreesByDay[selectedDay].map((entry, idx) => {
                                 const isPA = entry.record.solicitudType === 'PA';
                                 return (
-                                    <div key={idx} className="flex items-start justify-between bg-white dark:bg-slate-700 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600">
+                                    <div key={idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-5 rounded-[20px] transition-all hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 group border border-transparent hover:border-slate-100">
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="text-sm font-black text-slate-900 dark:text-white">{entry.record.funcionario}</p>
-                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${isPA ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'}`}>
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                <p className="text-base font-bold text-slate-800 dark:text-white group-hover:text-[#2F4DAA] transition-colors">{entry.record.funcionario}</p>
+                                                <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ${isPA ? 'bg-blue-50 text-[#2F4DAA]' : 'bg-orange-50 text-[#F59121]'}`}>
                                                     {entry.record.solicitudType}
                                                 </span>
                                                 {!entry.isStart && (
-                                                    <span className="text-[9px] font-bold bg-slate-100 dark:bg-slate-600 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                                                    <span className="text-[10px] font-bold bg-white text-slate-400 px-3 py-1 rounded-full border border-slate-100 uppercase tracking-widest">
                                                         Día {entry.dayNumber}
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="mt-1 flex items-center gap-2 flex-wrap">
-                                                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">{entry.record.acto}</span>
-                                                <span className="text-slate-300 dark:text-slate-600">•</span>
-                                                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">{entry.record.cantidadDias} día{entry.record.cantidadDias !== 1 ? 's' : ''}</span>
-                                                <span className="text-slate-300 dark:text-slate-600">•</span>
-                                                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">{entry.record.tipoJornada}</span>
+                                            <div className="mt-2 flex items-center gap-4 text-slate-500">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Hash className="w-3.5 h-3.5 opacity-50" />
+                                                    <span className="text-xs font-bold">{entry.record.acto}</span>
+                                                </div>
+                                                <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                                <div className="flex items-center gap-1.5">
+                                                    <Clock className="w-3.5 h-3.5 opacity-50" />
+                                                    <span className="text-xs font-bold">{entry.record.cantidadDias} día(s)</span>
+                                                </div>
+                                                <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                                <span className="text-xs font-bold uppercase tracking-wider">{entry.record.tipoJornada}</span>
                                                 {entry.record.fechaTermino && (
                                                     <>
-                                                        <span className="text-slate-300 dark:text-slate-600">•</span>
-                                                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">Hasta {entry.record.fechaTermino}</span>
+                                                        <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                                        <span className="text-xs font-bold">Hasta {entry.record.fechaTermino}</span>
                                                     </>
                                                 )}
                                             </div>
+                                        </div>
+                                        <div className="p-3 bg-white rounded-xl shadow-sm opacity-0 group-hover:opacity-100 transition-all border border-slate-50">
+                                            <ChevronRight className="w-5 h-5 text-[#2F4DAA]" />
                                         </div>
                                     </div>
                                 );
@@ -378,29 +369,25 @@ const CalendarView: React.FC<CalendarViewProps> = ({ isOpen, onClose, records })
                 )}
 
                 {/* ─── Leyenda ─── */}
-                <div className="px-4 sm:px-6 py-2.5 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center gap-4 flex-wrap">
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded bg-indigo-100 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800" />
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Permiso Admin.</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-800" />
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Feriado Legal</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30" />
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Fin de semana</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
-                            <span className="text-[8px] text-white font-black">1</span>
+                <div className="px-8 py-5 border-t border-slate-50 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3.5 h-3.5 rounded-[5px] bg-blue-50 border border-blue-100" />
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Permiso Admin.</span>
                         </div>
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Hoy</span>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3.5 h-3.5 rounded-[5px] bg-orange-50 border border-orange-100" />
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Feriado Legal</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3.5 h-3.5 rounded-[5px] bg-slate-50 border border-slate-100" />
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Inactivo</span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-1.5 ml-auto">
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500">● inicio</span>
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500">─ medio</span>
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500">◆ fin</span>
+                    <div className="flex items-center gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-slate-400" /> Inicio</span>
+                        <span className="flex items-center gap-2"><div className="w-3 h-[1px] bg-slate-300" /> Continuación</span>
+                        <span className="flex items-center gap-2 opacity-50">● Hoy</span>
                     </div>
                 </div>
             </div>

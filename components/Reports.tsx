@@ -146,13 +146,13 @@ export const Reports: React.FC<ReportsProps> = ({ employees, requests, config })
               >
                 <option value="all">Todas las Categorías</option>
                 <option value={LeaveType.LEGAL_HOLIDAY}>Solo Feriados Legales</option>
-                  <option value={LeaveType.ADMINISTRATIVE}>Solo Administrativos</option>
-                  <option value={LeaveType.SICK_LEAVE}>Solo Licencias Médicas</option>
-                  <option value={LeaveType.WITHOUT_PAY}>Sin Goce de Sueldo</option>
-                  <option value={LeaveType.PARENTAL}>Post Natal Parental</option>
-                </select>
-              </div>
+                <option value={LeaveType.ADMINISTRATIVE}>Solo Administrativos</option>
+                <option value={LeaveType.SICK_LEAVE}>Solo Licencias Médicas</option>
+                <option value={LeaveType.WITHOUT_PAY}>Sin Goce de Sueldo</option>
+                <option value={LeaveType.PARENTAL}>Post Natal Parental</option>
+              </select>
             </div>
+          </div>
 
           <div className="flex-1 overflow-y-auto p-2">
             {filteredLeaves.length === 0 ? (
@@ -188,6 +188,7 @@ export const Reports: React.FC<ReportsProps> = ({ employees, requests, config })
 
                 {filteredLeaves.map(req => {
                   const emp = employeeById.get(req.employeeId);
+                  const empName = emp ? `${emp.firstName} ${emp.lastNamePaternal} ${emp.lastNameMaternal}`.trim() : 'Funcionario Desconocido';
                   return (
                     <div
                       key={req.id}
@@ -203,7 +204,7 @@ export const Reports: React.FC<ReportsProps> = ({ employees, requests, config })
                       role="checkbox"
                       tabIndex={0}
                       aria-checked={selectedRequestIds.has(req.id)}
-                      aria-label={`${emp?.firstName} ${emp?.lastName} - ${req.type}`}
+                      aria-label={`${empName} - ${req.type}`}
                     >
                       <input
                         type="checkbox"
@@ -215,7 +216,7 @@ export const Reports: React.FC<ReportsProps> = ({ employees, requests, config })
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
-                          <p className="text-sm font-medium text-slate-900 truncate">{emp?.firstName} {emp?.lastName}</p>
+                          <p className="text-sm font-medium text-slate-900 truncate">{empName}</p>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ml-2 whitespace-nowrap border ${getLeaveTypeColor(req.type)}`}>
                             {req.type}
                           </span>
@@ -290,8 +291,8 @@ export const Reports: React.FC<ReportsProps> = ({ employees, requests, config })
                 onClick={handleCopy}
                 disabled={selectedRequestIds.size === 0}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all border ${copied
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed'
                   }`}
                 aria-label="Copiar reporte al portapapeles"
               >

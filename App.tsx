@@ -52,7 +52,7 @@ import { CONFIG } from './config';
 
 import {
   Cloud, FileSpreadsheet, RefreshCw, LayoutDashboard, BookOpen, BarChart3,
-  CheckCircle, AlertCircle, Moon, Sun, Undo2, Keyboard, CalendarDays, Palette, LogOut, Settings as SettingsIcon, Menu, X
+  CheckCircle, AlertCircle, Moon, Sun, Undo2, Keyboard, CalendarDays, Palette, LogOut, Settings as SettingsIcon, Menu, X, Search
 } from 'lucide-react';
 
 // Loading fallback component
@@ -114,11 +114,11 @@ const deduplicateEmployees = (list: EmployeeExtended[]): EmployeeExtended[] => {
   for (let i = 0; i < list.length; i++) {
     if (consumed.has(i)) continue;
     let merged = { ...list[i] };
-    const nameI = `${list[i].firstName} ${list[i].lastName}`.trim();
+    const nameI = `${list[i].firstName} ${list[i].lastNamePaternal} ${list[i].lastNameMaternal}`.trim();
 
     for (let j = i + 1; j < list.length; j++) {
       if (consumed.has(j)) continue;
-      const nameJ = `${list[j].firstName} ${list[j].lastName}`.trim();
+      const nameJ = `${list[j].firstName} ${list[j].lastNamePaternal} ${list[j].lastNameMaternal}`.trim();
 
       if ((merged.rut && list[j].rut && merged.rut === list[j].rut) || isSamePerson(nameI, nameJ)) {
         consumed.add(j);
@@ -126,11 +126,12 @@ const deduplicateEmployees = (list: EmployeeExtended[]): EmployeeExtended[] => {
         // Prefer the entry that has a RUT
         if (!merged.rut && other.rut) merged.rut = other.rut;
         // Prefer the longer (more complete) name
-        const mergedFull = `${merged.firstName} ${merged.lastName}`.trim();
-        const otherFull = `${other.firstName} ${other.lastName}`.trim();
+        const mergedFull = `${merged.firstName} ${merged.lastNamePaternal} ${merged.lastNameMaternal}`.trim();
+        const otherFull = `${other.firstName} ${other.lastNamePaternal} ${other.lastNameMaternal}`.trim();
         if (otherFull.length > mergedFull.length) {
           merged.firstName = other.firstName;
-          merged.lastName = other.lastName;
+          merged.lastNamePaternal = other.lastNamePaternal;
+          merged.lastNameMaternal = other.lastNameMaternal;
           merged.avatarUrl = other.avatarUrl;
         }
         // Keep non-default field values
@@ -153,7 +154,8 @@ const deduplicateEmployees = (list: EmployeeExtended[]): EmployeeExtended[] => {
       }
     }
     merged.firstName = merged.firstName.toUpperCase();
-    merged.lastName = merged.lastName.toUpperCase();
+    merged.lastNamePaternal = merged.lastNamePaternal.toUpperCase();
+    merged.lastNameMaternal = merged.lastNameMaternal.toUpperCase();
     result.push(merged);
   }
   return result;
@@ -166,7 +168,7 @@ const AppContent: React.FC = () => {
   const { user, signOut, permissions, role, roleLabel, roleColors } = useAuth();
 
   // Current view state
-  const [currentView, setCurrentView] = useState<ViewType>('decretos');
+  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ============================================================
@@ -209,7 +211,7 @@ const AppContent: React.FC = () => {
   const employees: Employee[] = useMemo(() => {
     return hrEmployees
       .map(emp => ({
-        nombre: `${emp.firstName} ${emp.lastName}`.trim().toUpperCase(),
+        nombre: `${emp.firstName} ${emp.lastNamePaternal} ${emp.lastNameMaternal}`.trim().toUpperCase(),
         rut: emp.rut || ''
       }))
       .filter(e => e.nombre)
@@ -244,7 +246,7 @@ const AppContent: React.FC = () => {
 
         // Check if exists by fuzzy name match
         const byName = current.find(e =>
-          isSamePerson(`${e.firstName} ${e.lastName}`.trim(), sheetEmp.nombre)
+          isSamePerson(`${e.firstName} ${e.lastNamePaternal} ${e.lastNameMaternal}`.trim(), sheetEmp.nombre)
         );
 
         if (byName) {
@@ -259,13 +261,21 @@ const AppContent: React.FC = () => {
         // Truly new employee from cloud
         const parts = sheetEmp.nombre.split(' ');
         const firstName = parts[0] || '';
-        const lastName = parts.slice(1).join(' ') || '';
+        const lastNamePaternal = parts[1] || '';
+        const lastNameMaternal = parts.slice(2).join(' ') || '';
         current = [...current, {
           id: crypto.randomUUID(),
           firstName,
-          lastName,
+          lastNamePaternal,
+          lastNameMaternal,
           rut: sheetEmp.rut,
-          email: `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/ /g, '')}@institucion.cl`,
+          email: `${firstName.toLowerCase()}.${lastNamePaternal.toLowerCase().replace(/ /g, '')}@institucion.cl`,
+          emailPersonal: '',
+          birthDate: '1990-01-01',
+          hireDate: '2024-01-01',
+          jefaturaNombre: '',
+          jefaturaEmail: '',
+          emergencyContact: '',
           position: 'Funcionario',
           department: 'General',
           totalVacationDays: appConfig.defaultVacationDays,
@@ -274,7 +284,7 @@ const AppContent: React.FC = () => {
           usedAdminDays: 0,
           totalSickLeaveDays: appConfig.defaultSickLeaveDays,
           usedSickLeaveDays: 0,
-          avatarUrl: `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff`
+          avatarUrl: `https://ui-avatars.com/api/?name=${firstName}+${lastNamePaternal}&background=random&color=fff`
         }];
         changed = true;
       }
@@ -500,13 +510,21 @@ const AppContent: React.FC = () => {
   const handleAddEmployeeFromModal = useCallback((employee: Employee) => {
     const parts = employee.nombre.toUpperCase().split(' ');
     const firstName = parts[0] || '';
-    const lastName = parts.slice(1).join(' ') || '';
+    const lastNamePaternal = parts[1] || '';
+    const lastNameMaternal = parts.slice(2).join(' ') || '';
     const newEmp: EmployeeExtended = {
       id: crypto.randomUUID(),
       firstName,
-      lastName,
+      lastNamePaternal,
+      lastNameMaternal,
       rut: employee.rut,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/ /g, '')}@institucion.cl`,
+      email: `${firstName.toLowerCase()}.${lastNamePaternal.toLowerCase().replace(/ /g, '')}@institucion.cl`,
+      emailPersonal: '',
+      birthDate: '1990-01-01',
+      hireDate: '2024-01-01',
+      jefaturaNombre: '',
+      jefaturaEmail: '',
+      emergencyContact: '',
       position: 'Funcionario',
       department: 'General',
       totalVacationDays: appConfig.defaultVacationDays,
@@ -515,7 +533,7 @@ const AppContent: React.FC = () => {
       usedAdminDays: 0,
       totalSickLeaveDays: appConfig.defaultSickLeaveDays,
       usedSickLeaveDays: 0,
-      avatarUrl: `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff`
+      avatarUrl: `https://ui-avatars.com/api/?name=${firstName}+${lastNamePaternal}&background=random&color=fff`
     };
     setHrEmployees(curr => [...curr, newEmp]);
     addNotification('Funcionario agregado exitosamente', 'success');
@@ -524,15 +542,17 @@ const AppContent: React.FC = () => {
   const handleUpdateEmployeeFromModal = useCallback((oldRut: string, updatedEmployee: Employee) => {
     const parts = updatedEmployee.nombre.toUpperCase().split(' ');
     const firstName = parts[0] || '';
-    const lastName = parts.slice(1).join(' ') || '';
+    const lastNamePaternal = parts[1] || '';
+    const lastNameMaternal = parts.slice(2).join(' ') || '';
     setHrEmployees(curr => curr.map(emp => {
       if (emp.rut === oldRut) {
         return {
           ...emp,
           firstName,
-          lastName,
+          lastNamePaternal,
+          lastNameMaternal,
           rut: updatedEmployee.rut,
-          avatarUrl: `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff`
+          avatarUrl: `https://ui-avatars.com/api/?name=${firstName}+${lastNamePaternal}&background=random&color=fff`
         };
       }
       return emp;
@@ -548,29 +568,44 @@ const AppContent: React.FC = () => {
     addNotification('Funcionario eliminado', 'info');
   }, [hrEmployees, addNotification]);
 
-  const handleAddHrEmployee = (data: { firstName: string; lastName: string; email: string; position: string; department: string }) => {
+  const handleAddHrEmployee = (data: Partial<EmployeeExtended>) => {
     const newEmployee: EmployeeExtended = {
       id: crypto.randomUUID(),
-      firstName: data.firstName.toUpperCase(),
-      lastName: data.lastName.toUpperCase(),
-      email: data.email,
-      position: data.position,
-      department: data.department,
+      firstName: data.firstName?.toUpperCase() || '',
+      lastNamePaternal: data.lastNamePaternal?.toUpperCase() || '',
+      lastNameMaternal: data.lastNameMaternal?.toUpperCase() || '',
+      rut: data.rut || '',
+      email: data.email || '',
+      emailPersonal: data.emailPersonal || '',
+      position: data.position || 'Funcionario',
+      department: data.department || 'General',
+      birthDate: data.birthDate || '1990-01-01',
+      hireDate: data.hireDate || new Date().toISOString().split('T')[0],
+      jefaturaNombre: data.jefaturaNombre || '',
+      jefaturaEmail: data.jefaturaEmail || '',
+      emergencyContact: data.emergencyContact || '',
       totalVacationDays: appConfig.defaultVacationDays,
       usedVacationDays: 0,
       totalAdminDays: appConfig.defaultAdminDays,
       usedAdminDays: 0,
       totalSickLeaveDays: appConfig.defaultSickLeaveDays,
       usedSickLeaveDays: 0,
-      avatarUrl: `https://ui-avatars.com/api/?name=${data.firstName}+${data.lastName}&background=random&color=fff`
+      avatarUrl: `https://ui-avatars.com/api/?name=${data.firstName}+${data.lastNamePaternal}&background=random&color=fff`
     };
     setHrEmployees(curr => [...curr, newEmployee]);
     addNotification('Funcionario registrado con exito', 'success');
   };
 
-  const handleEditHrEmployee = (id: string, data: { firstName: string; lastName: string; email: string; position: string; department: string }) => {
+  const handleEditHrEmployee = (id: string, data: Partial<EmployeeExtended>) => {
     setHrEmployees(curr => curr.map(emp =>
-      emp.id === id ? { ...emp, ...data, firstName: data.firstName.toUpperCase(), lastName: data.lastName.toUpperCase(), avatarUrl: `https://ui-avatars.com/api/?name=${data.firstName}+${data.lastName}&background=random&color=fff` } : emp
+      emp.id === id ? {
+        ...emp,
+        ...data,
+        firstName: data.firstName?.toUpperCase() || emp.firstName,
+        lastNamePaternal: data.lastNamePaternal?.toUpperCase() || emp.lastNamePaternal,
+        lastNameMaternal: data.lastNameMaternal?.toUpperCase() || emp.lastNameMaternal,
+        avatarUrl: `https://ui-avatars.com/api/?name=${data.firstName || emp.firstName}+${data.lastNamePaternal || emp.lastNamePaternal}&background=random&color=fff`
+      } : emp
     ));
     addNotification('Datos del funcionario actualizados', 'success');
   };
@@ -916,149 +951,125 @@ const AppContent: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Header */}
-        <header className="sticky top-0 z-[100] w-full border-b border-slate-200 dark:border-slate-700 bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl">
-          <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+        {/* Header - Premium Glassmorphism Interface */}
+        <header className="sticky top-0 z-[100] w-full border-b border-slate-200/60 dark:border-slate-700/60 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl transition-all duration-300">
+          <div className="px-4 sm:px-8 h-20 flex items-center justify-between gap-4">
 
-            {/* Sync status */}
-            <div className="hidden sm:flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${syncStatusDotClass}`} />
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{syncStatusLabel}</span>
+            {/* Left Side: Mobile Toggle & Context */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-2.5 rounded-2xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+
+              <div className="hidden lg:flex flex-col">
+                <h1 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                  {currentView === 'decretos' ? 'Gestión de Decretos' :
+                    currentView === 'dashboard' ? 'Panel de Control' :
+                      currentView === 'employees' ? 'Nómina de Funcionarios' : 'Sistema GDP Cloud'}
+                </h1>
+                <div className="flex items-center gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${syncStatusDotClass}`} />
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{syncStatusLabel}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              {/* Sync */}
-              <button
-                onClick={() => fetchFromCloud()}
-                disabled={isSyncing}
-                className={`p-2 rounded-lg transition-all ${isSyncing
-                  ? 'text-slate-300 dark:text-slate-600'
-                  : syncError
-                    ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30'
-                    : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
-                  }`}
-                title="Sincronizar datos"
-              >
-                {syncError ? <AlertCircle className="w-4 h-4" /> : <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />}
-              </button>
+            {/* Right Side: Action Matrix & Profile */}
+            <div className="flex items-center gap-2 sm:gap-3">
 
-              {/* Undo */}
-              {canUndo && (
+              {/* Utility Actions Group */}
+              <div className="hidden md:flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 gap-1">
+                {/* Sync */}
                 <button
-                  onClick={handleUndo}
-                  className="p-2 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-all"
-                  title="Deshacer"
+                  onClick={() => fetchFromCloud()}
+                  disabled={isSyncing}
+                  className={`p-2 rounded-xl transition-all active:scale-90 ${isSyncing
+                    ? 'text-slate-300 dark:text-slate-600'
+                    : syncError
+                      ? 'text-red-500 hover:bg-red-100/50'
+                      : 'text-indigo-600 dark:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 shadow-sm'
+                    }`}
+                  title="Sincronizar datos"
                 >
-                  <Undo2 className="w-4 h-4" />
+                  <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
                 </button>
-              )}
 
-              {/* Dashboard toggle */}
-              <button
-                onClick={() => setShowDashboard(p => !p)}
-                className={`hidden sm:flex p-2 rounded-lg transition-all ${showDashboard
-                  ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400'
-                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                title="Panel de estadisticas"
-              >
-                <BarChart3 className="w-4 h-4" />
-              </button>
+                {/* Search / Palette Trigger (Visual only for now) */}
+                <button
+                  onClick={() => setCommandPaletteOpen(true)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                  title="Comandos (Cmd+K)"
+                >
+                  <Keyboard className="w-4 h-4" />
+                </button>
 
-              {/* Decree book */}
-              <button
-                onClick={() => openModal('decreeBook')}
-                className="hidden sm:flex p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                title="Libro de decretos"
-              >
-                <BookOpen className="w-4 h-4" />
-              </button>
+                {/* Export */}
+                <button
+                  onClick={handleExportData}
+                  className="p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                  title="Exportar a Excel"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                </button>
 
-              {/* Calendar */}
-              <button
-                onClick={() => openModal('calendar')}
-                className="hidden sm:flex p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                title="Calendario"
-              >
-                <CalendarDays className="w-4 h-4" />
-              </button>
+                {/* Dark Mode */}
+                <button
+                  onClick={toggleDarkMode}
+                  className="p-2 rounded-xl text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-white dark:hover:bg-slate-700 transition-all font-bold"
+                  title={isDark ? 'Modo claro' : 'Modo oscuro'}
+                >
+                  {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </button>
+              </div>
 
-              {/* Excel export */}
-              <button
-                onClick={handleExportData}
-                className="hidden md:flex p-2 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all"
-                title="Exportar a Excel"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-              </button>
-
-              {/* Dark mode */}
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                title={isDark ? 'Modo claro' : 'Modo oscuro'}
-              >
-                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-
-              {/* Theme selector */}
-              <button
-                onClick={() => openModal('themeSelector')}
-                className="hidden sm:flex p-2 rounded-lg text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                title="Personalizar tema"
-              >
-                <Palette className="w-4 h-4" />
-              </button>
-
-              {/* Notifications */}
+              {/* Notification Center Integrated */}
               <NotificationCenter
                 records={records}
                 employees={employees}
                 onViewEmployee={handleViewEmployeeFromNotification}
               />
 
-              {/* Separator */}
-              <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1" />
+              {/* User Profile Capsule */}
+              <div className="flex items-center gap-3 pl-3 ml-1 border-l border-slate-200 dark:border-slate-700">
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-xs font-black text-slate-800 dark:text-white leading-none">
+                    {user?.displayName || user?.email?.split('@')[0] || 'Usuario'}
+                  </span>
+                  <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 px-1.5 py-0.5 rounded ${roleColors.bg} ${roleColors.text}`}>
+                    {roleLabel}
+                  </span>
+                </div>
+                <div className="relative group">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 p-0.5 shadow-lg shadow-indigo-500/20 active:scale-95 transition-transform cursor-pointer overflow-hidden">
+                    <img
+                      src={`https://ui-avatars.com/api/?name=${user?.email}&background=fff&color=4F46E5&bold=true`}
+                      alt="Profile"
+                      className="w-full h-full rounded-[14px] bg-white object-cover"
+                    />
+                  </div>
+                  {/* Mini Status Dot */}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
+                </div>
 
-              {/* Role badge */}
-              <span className={`hidden sm:inline-flex px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${roleColors.bg} ${roleColors.text}`}>
-                {roleLabel}
-              </span>
-
-              {/* Admin Panel */}
-              {role === 'admin' && (
+                {/* Logout Trigger (Minimalist) */}
                 <button
-                  onClick={() => { setCurrentView('settings'); setMobileMenuOpen(false); }}
-                  className="p-2 rounded-lg text-purple-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all"
-                  title="Configuración y Administración"
+                  onClick={handleLogout}
+                  className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all md:ml-2"
+                  title="Cerrar sesión"
                 >
-                  <SettingsIcon className="w-4 h-4" />
+                  <LogOut className="w-4 h-4" />
                 </button>
-              )}
-
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-lg text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all"
-                title="Cerrar sesion"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              </div>
             </div>
           </div>
 
-          {/* Progress bar */}
+          {/* Dynamic Progress/Status Line */}
           {isSyncing && (
-            <div className="absolute bottom-0 left-0 w-full h-[3px] bg-indigo-50 dark:bg-indigo-900/50 overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-indigo-600 via-sky-400 to-indigo-600 bg-[length:200%_100%] animate-sync-progress" />
+            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-indigo-50 dark:bg-indigo-900/30 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-transparent via-indigo-600 to-transparent bg-[length:200%_100%] animate-sync-progress" />
             </div>
           )}
         </header>
@@ -1078,6 +1089,23 @@ const AppContent: React.FC = () => {
                   onClickEmployees={() => openModal('employeeList')}
                   onClickUrgent={() => openModal('lowBalance')}
                 />
+
+                {/* --- Global Action Search Bar --- */}
+                <div className="relative mt-6 max-w-2xl mx-auto">
+                  <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                    <Search className="w-5 h-5 text-indigo-400 dark:text-indigo-300" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    placeholder="Consultar estado de funcionario o buscar decreto..."
+                    className="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-[20px] py-4 pl-14 pr-6 text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all shadow-xl shadow-indigo-500/5"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <span className="hidden sm:block text-[9px] font-black text-slate-300 uppercase tracking-widest bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-700">Cmd + K</span>
+                  </div>
+                </div>
               </div>
             )}
 

@@ -388,11 +388,11 @@ const PermitForm: React.FC<PermitFormProps> = ({
 
   // Componente de sección con título
   const SectionTitle = ({ icon: Icon, title, color }: { icon: React.ElementType; title: string; color: string }) => (
-    <div className={`flex items-center gap-3 mb-5 pb-3 border-b ${color}`}>
-      <div className={`p-2 rounded-xl ${color.includes('indigo') ? 'bg-indigo-100 dark:bg-indigo-900/50' : 'bg-amber-100 dark:bg-amber-900/50'}`}>
-        <Icon className={`w-5 h-5 ${color.includes('indigo') ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`} />
+    <div className={`flex items-center gap-3 mb-6 pb-4 border-b ${color}`}>
+      <div className={`p-2 rounded-xl ${color.includes('blue') || color.includes('indigo') ? 'bg-blue-50 dark:bg-blue-900/40' : 'bg-orange-50 dark:bg-orange-900/40'}`}>
+        <Icon className={`w-5 h-5 ${color.includes('blue') || color.includes('indigo') ? 'text-[#2F4DAA] dark:text-blue-400' : 'text-[#F59121] dark:text-orange-400'}`} />
       </div>
-      <h3 className={`text-sm font-black uppercase tracking-widest ${color.includes('indigo') ? 'text-indigo-700 dark:text-indigo-300' : 'text-amber-700 dark:text-amber-300'}`}>
+      <h3 className={`text-[11px] font-bold uppercase tracking-widest ${color.includes('blue') || color.includes('indigo') ? 'text-slate-700 dark:text-slate-300' : 'text-slate-700 dark:text-slate-300'}`}>
         {title}
       </h3>
     </div>
@@ -400,436 +400,494 @@ const PermitForm: React.FC<PermitFormProps> = ({
 
   return (
     <div className="relative group">
-      <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-sky-500 rounded-[2.5rem] blur opacity-5 group-hover:opacity-10 transition duration-1000 group-hover:duration-200" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/10 to-sky-500/10 rounded-[40px] blur-xl opacity-0 group-hover:opacity-100 transition duration-1000" />
 
       <form
         onSubmit={handleSubmit}
-        className={`relative bg-white dark:bg-slate-800 rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] shadow-xl border overflow-hidden transition-all duration-500 ${editingRecord
-          ? 'border-amber-400 dark:border-amber-500'
-          : 'border-slate-200 dark:border-slate-700'
+        className={`relative bg-white dark:bg-slate-800 rounded-[32px] shadow-[0px_20px_60px_rgba(26,43,86,0.06)] border overflow-hidden transition-all duration-500 ${editingRecord
+          ? 'border-[#F59121]/30 ring-1 ring-[#F59121]/10'
+          : 'border-slate-100 dark:border-slate-700'
           }`}
       >
-        {/* Header */}
-        <div className={`p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-white relative overflow-hidden ${editingRecord ? 'bg-amber-500' : formData.solicitudType === 'PA' ? 'bg-gradient-to-r from-indigo-600 to-indigo-800' : 'bg-gradient-to-r from-amber-500 to-orange-600'}`}>
-          <div className="absolute top-0 right-0 p-4 opacity-10 scale-150 pointer-events-none">
-            {formData.solicitudType === 'PA' ? <Calendar size={120} /> : <Sun size={120} />}
+        {/* Header Premium */}
+        <div className={`p-8 sm:p-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 text-white relative overflow-hidden ${editingRecord ? 'bg-gradient-to-br from-[#F59121] to-[#d4791a]' : formData.solicitudType === 'PA' ? 'bg-gradient-to-br from-[#2F4DAA] to-[#1A2B56]' : 'bg-gradient-to-br from-[#F59121] to-[#d4791a]'}`}>
+          <div className="absolute top-0 right-0 p-4 opacity-5 scale-150 rotate-12 pointer-events-none">
+            {formData.solicitudType === 'PA' ? <Calendar size={180} /> : <Sun size={180} />}
           </div>
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
-          <div className="flex items-center gap-4 sm:gap-5 z-10">
-            <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl backdrop-blur-md shadow-lg bg-white/20">
-              {editingRecord ? <Save className="w-5 h-5 sm:w-6 sm:h-6" /> : <PlusCircle className="w-5 h-5 sm:w-6 sm:h-6" />}
+          <div className="flex items-center gap-6 z-10">
+            <div className="p-4 rounded-2xl backdrop-blur-xl bg-white/10 ring-1 ring-white/20 shadow-2xl">
+              {editingRecord ? <Save className="w-7 h-7" /> : <PlusCircle className="w-7 h-7" />}
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold uppercase tracking-tight">
-                {editingRecord ? 'Editando Resolución' : 'Generar Acto Administrativo'}
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+                {editingRecord ? 'Editar Resolución' : 'Nueva Resolución'}
               </h2>
-              <p className="text-[10px] sm:text-[11px] font-bold uppercase opacity-80 tracking-[0.15em] sm:tracking-[0.2em] mt-1">
-                {formData.solicitudType === 'PA' ? 'Permiso Administrativo' : 'Feriado Legal'}
-              </p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Sistema GDP Cloud</span>
+                <span className="w-1 h-1 rounded-full bg-white/40" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Gestión de Personal</span>
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-2 z-10 w-full sm:w-auto">
+          <div className="flex gap-3 z-10 w-full sm:w-auto">
             {editingRecord && (
-              <button type="button" onClick={onCancelEdit} className="p-2.5 hover:bg-white/20 rounded-xl transition-all border border-white/20">
-                <X className="w-5 h-5" />
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20 text-xs font-bold uppercase tracking-wider active:scale-95"
+              >
+                <X className="w-4 h-4" /> Cancelar
               </button>
             )}
           </div>
         </div>
 
         {/* Form Body */}
-        <div className="p-4 sm:p-6 md:p-8 lg:p-10 space-y-6 sm:space-y-8">
+        <div className="p-6 sm:p-10 md:p-12 space-y-8 sm:space-y-12">
           {formError && (
-            <div className="bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 p-4 rounded-2xl flex items-center gap-3">
-              <AlertCircle className="text-red-500 flex-shrink-0" />
-              <p className="text-xs sm:text-sm font-bold text-red-700 dark:text-red-300">{formError}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-100 dark:border-red-900/50 p-6 rounded-[20px] flex items-start gap-4 animate-in slide-in-from-top-2">
+              <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
+                <AlertCircle className="text-red-600 dark:text-red-400 w-5 h-5 flex-shrink-0" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Error de validación</p>
+                <p className="text-sm font-bold text-red-800 dark:text-red-200">{formError}</p>
+              </div>
             </div>
           )}
 
-          {formData.solicitudType === 'PA' && isNegative && (
-            <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-4 rounded-2xl flex items-center gap-3">
-              <AlertTriangle className="text-amber-500 flex-shrink-0" />
-              <p className="text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-300">
-                Atención: El saldo quedará en negativo ({saldoFinal} días)
-              </p>
-            </div>
-          )}
-
-          {/* Selector de Tipo - Más prominente */}
+          {/* Selector de Tipo Moderno */}
           <div className="flex justify-center">
-            <div className="inline-flex gap-2 bg-slate-100 dark:bg-slate-700/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-600 shadow-inner">
+            <div className="inline-flex gap-2 bg-slate-100/50 dark:bg-slate-900/50 p-2 rounded-[24px] border border-slate-200/50 dark:border-slate-700 shadow-inner">
               {SOLICITUD_TYPES.map(t => (
                 <button
                   key={t.value}
                   type="button"
                   onClick={() => setFormData(p => ({ ...p, solicitudType: t.value }))}
-                  className={`px-4 sm:px-8 lg:px-12 py-3 rounded-xl text-[11px] sm:text-xs lg:text-sm font-black transition-all duration-300 ${formData.solicitudType === t.value
-                    ? t.value === 'PA'
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50'
-                      : 'bg-amber-500 text-white shadow-lg shadow-amber-200 dark:shadow-amber-900/50'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-600/50'
+                  className={`px-8 sm:px-14 py-4 rounded-[18px] text-[11px] font-black transition-all duration-500 uppercase tracking-widest ${formData.solicitudType === t.value
+                    ? 'bg-white dark:bg-slate-800 text-[#2F4DAA] dark:text-blue-400 shadow-[0px_10px_25px_rgba(0,0,0,0.06)] ring-1 ring-slate-100 dark:ring-slate-700'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                     }`}
                 >
-                  {t.value === 'PA' ? 'PERMISO (PA)' : 'FERIADO (FL)'}
+                  {t.value === 'PA' ? 'Permisos (PA)' : 'Feriados (FL)'}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* ===================== DATOS COMUNES ===================== */}
-          <div className="bg-slate-50/50 dark:bg-slate-700/20 p-4 sm:p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
-            <SectionTitle icon={User} title="Datos del Funcionario" color="border-slate-200 dark:border-slate-600 text-slate-600" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            {/* Columna Izquierda: Datos del Funcionario y Administrativos */}
+            <div className="lg:col-span-12 space-y-10">
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              {/* Nombre */}
-              <div className="md:col-span-8 relative" ref={dropdownRef}>
-                <label className="text-[10px] sm:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2 block">
-                  Nombre del Funcionario {errors.funcionario && <span className="text-red-500 ml-2">• {errors.funcionario}</span>}
-                </label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 dark:text-slate-600" />
-                  <input
-                    name="funcionario"
-                    value={formData.funcionario}
-                    onChange={(e) => { handleChange(e); setShowSuggestions(true); }}
-                    onFocus={() => setShowSuggestions(true)}
-                    autoComplete="off"
-                    placeholder="NOMBRE O RUT PARA BUSCAR..."
-                    className={`w-full pl-12 pr-12 py-4 bg-white dark:bg-slate-700 border rounded-xl font-black text-slate-800 dark:text-white uppercase focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 dark:focus:ring-indigo-900/50 outline-none transition-all text-sm ${errors.funcionario ? 'border-red-300' : 'border-slate-200 dark:border-slate-600'}`}
-                  />
-                  <button type="button" onClick={() => setShowSuggestions(!showSuggestions)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600">
-                    <ChevronDown className={`w-5 h-5 transition-transform ${showSuggestions ? 'rotate-180' : ''}`} />
-                  </button>
+              {/* Sección Funcionario */}
+              <div className="bg-slate-50/50 dark:bg-slate-900/20 p-8 sm:p-10 rounded-[24px] border border-slate-100 dark:border-slate-800 relative group/section transition-all hover:bg-slate-50 dark:hover:bg-slate-900/30">
+                <SectionTitle icon={User} title="Identificación del Funcionario" color="border-slate-200 dark:border-slate-700 text-slate-700" />
 
-                  {showSuggestions && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden">
-                      <div className="max-h-[280px] overflow-y-auto p-2">
-                        {filteredEmployees.length > 0 ? filteredEmployees.map(emp => (
-                          <div key={emp.rut} onClick={() => selectEmployee(emp)} className="flex items-center justify-between px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg cursor-pointer">
-                            <div>
-                              <p className="text-sm font-black text-slate-800 dark:text-white">{emp.nombre}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">RUT: {emp.rut}</p>
-                            </div>
-                            <CheckCircle2 className="w-4 h-4 text-indigo-500 opacity-0 group-hover:opacity-100" />
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mt-8">
+                  <div className="md:col-span-8 relative" ref={dropdownRef}>
+                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1 mb-3 block">
+                      Nombre Completo {errors.funcionario && <span className="text-red-500 ml-2 animate-pulse">• {errors.funcionario}</span>}
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-600 shadow-sm transition-all group-focus-within/section:text-[#2F4DAA]">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <input
+                        name="funcionario"
+                        value={formData.funcionario}
+                        onChange={(e) => { handleChange(e); setShowSuggestions(true); }}
+                        onFocus={() => setShowSuggestions(true)}
+                        autoComplete="off"
+                        placeholder="Escriba para buscar por nombre o RUT..."
+                        className={`w-full pl-18 pr-12 py-5 bg-white dark:bg-slate-800 border-2 rounded-[14px] font-bold text-slate-800 dark:text-white uppercase focus:border-[#2F4DAA] focus:ring-[8px] focus:ring-blue-100 dark:focus:ring-blue-900/10 outline-none transition-all text-sm ${errors.funcionario ? 'border-red-200 ring-red-50' : 'border-slate-50 dark:border-slate-700 shadow-sm'}`}
+                      />
+                      <button type="button" onClick={() => setShowSuggestions(!showSuggestions)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#2F4DAA] p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                        <ChevronDown className={`w-5 h-5 transition-transform duration-500 ${showSuggestions ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showSuggestions && (
+                        <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[20px] shadow-[0px_20px_60px_rgba(0,0,0,0.15)] z-[100] overflow-hidden animate-in slide-in-from-top-4 duration-500">
+                          <div className="p-3 border-b border-slate-50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/50">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Resultados de búsqueda</p>
                           </div>
-                        )) : (
-                          <div className="px-6 py-8 text-center">
-                            <User className="w-8 h-8 text-slate-200 dark:text-slate-700 mx-auto mb-2" />
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sin coincidencias</p>
+                          <div className="max-h-[300px] overflow-y-auto p-2 custom-scrollbar">
+                            {filteredEmployees.length > 0 ? filteredEmployees.map(emp => (
+                              <div key={emp.rut} onClick={() => selectEmployee(emp)} className="flex items-center gap-4 px-4 py-3.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl cursor-pointer group/item transition-all active:scale-[0.98]">
+                                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400 group-hover/item:bg-[#2F4DAA] group-hover/item:text-white transition-all">
+                                  <User className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[13px] font-black text-slate-800 dark:text-white group-hover/item:text-[#2F4DAA] dark:group-hover/item:text-blue-400 transition-colors uppercase whitespace-nowrap overflow-hidden text-ellipsis">{emp.nombre}</p>
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Cédula: {emp.rut}</p>
+                                </div>
+                                <CheckCircle2 className="w-5 h-5 text-emerald-500 opacity-0 group-hover/item:opacity-100 transition-all transform scale-50 group-hover/item:scale-100" />
+                              </div>
+                            )) : (
+                              <div className="px-6 py-12 text-center">
+                                <AlertTriangle className="w-10 h-10 text-slate-200 dark:text-slate-700 mx-auto mb-3" />
+                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">No se encontraron funcionarios</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-4">
+                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1 mb-3 block">
+                      RUT Asociado {errors.rut && <span className="text-red-500 ml-2 animate-pulse">• {errors.rut}</span>}
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-700">
+                        <Fingerprint className="w-5 h-5" />
+                      </div>
+                      <input
+                        readOnly
+                        value={formData.rut || 'Pendiente...'}
+                        className={`w-full pl-18 pr-10 py-5 bg-slate-50/50 dark:bg-slate-900/30 border-2 rounded-[14px] font-mono font-bold text-slate-500 dark:text-slate-600 outline-none text-sm border-dashed border-slate-200 dark:border-slate-700`}
+                      />
+                      {formData.rut && validateRut(formData.rut) && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 block">N° correlativo decreto</label>
+                    <div className="relative">
+                      <input
+                        name="acto"
+                        value={formData.acto}
+                        onChange={handleChange}
+                        className="w-full bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-700 px-6 py-4 rounded-[14px] font-black text-[#2F4DAA] dark:text-blue-400 outline-none focus:border-[#2F4DAA] focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 text-center text-[16px] shadow-sm transition-all"
+                      />
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 uppercase tracking-widest hidden sm:block">ACTO</div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 block">Materia del acto</label>
+                    <select
+                      name="materia"
+                      value={formData.materia}
+                      onChange={handleChange}
+                      className="w-full bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-700 px-6 py-4 rounded-[14px] font-bold text-slate-700 dark:text-slate-300 text-sm outline-none focus:border-[#2F4DAA] focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/10 cursor-pointer shadow-sm transition-all appearance-none"
+                    >
+                      <option value="Decreto Exento">Decreto Exento</option>
+                      <option value="Resolución Exenta">Resolución Exenta</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* ===================== SECCIÓN PA ===================== */}
+              {formData.solicitudType === 'PA' && (
+                <div className="bg-blue-50/30 dark:bg-blue-900/10 p-8 sm:p-10 rounded-[24px] border border-blue-100 dark:border-blue-900/40 animate-in fade-in slide-in-from-bottom-4 transition-all hover:bg-blue-50/50">
+                  <SectionTitle icon={Clock} title="Configuración del Permiso (PA)" color="border-blue-200 dark:border-blue-800 text-[#2F4DAA]" />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
+                    <div className="relative group/field">
+                      <label className="text-[10px] font-black text-[#2F4DAA] dark:text-blue-400 uppercase tracking-[0.2em] block mb-3">Saldo Previo</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.5"
+                          name="diasHaber"
+                          value={formData.diasHaber}
+                          onChange={handleChange}
+                          className="w-full bg-white dark:bg-slate-800 border-2 border-blue-50 dark:border-slate-700 px-4 py-4 rounded-[14px] font-black text-slate-800 dark:text-white outline-none focus:border-[#2F4DAA] text-center text-lg shadow-sm group-hover/field:border-blue-200 transition-all"
+                        />
+                        {detectedSaldo !== null && (
+                          <div className="absolute -top-2 -right-2 bg-[#2F4DAA] text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg border border-white/20">AUTOSYNC</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="group/field">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3">
+                        Días a utilizar {errors.cantidadDias && <span className="text-red-500 animate-pulse">•</span>}
+                      </label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        name="cantidadDias"
+                        value={formData.cantidadDias}
+                        onChange={handleChange}
+                        min="0.5"
+                        className={`w-full bg-white dark:bg-slate-800 border-2 px-4 py-4 rounded-[14px] font-black text-slate-900 dark:text-white outline-none focus:border-[#2F4DAA] text-center text-lg shadow-sm transition-all ${errors.cantidadDias ? 'border-red-200 bg-red-50/30' : 'border-slate-50 dark:border-slate-700 group-hover/field:border-blue-100'}`}
+                      />
+                    </div>
+
+                    <div className="group/field">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3">
+                        Día de Inicio {errors.fechaInicio && <span className="text-red-500 animate-pulse">•</span>}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          name="fechaInicio"
+                          value={formData.fechaInicio}
+                          onChange={handleChange}
+                          className={`w-full bg-white dark:bg-slate-800 border-2 px-5 py-4 rounded-[14px] font-bold text-slate-800 dark:text-white outline-none focus:border-[#2F4DAA] text-sm shadow-sm transition-all ${errors.fechaInicio ? 'border-red-200 bg-red-50/30' : 'border-slate-50 dark:border-slate-700 group-hover/field:border-blue-100'}`}
+                        />
+                        {formData.fechaInicio && (
+                          <div className={`absolute -bottom-6 left-1 text-[10px] font-black uppercase tracking-tight ${isWeekend(formData.fechaInicio) ? 'text-red-500' : 'text-emerald-600'}`}>
+                            {getDayName(formData.fechaInicio)} {isWeekend(formData.fechaInicio) && '(⚠️ FIN DE SEMANA)'}
                           </div>
                         )}
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
 
-              {/* RUT */}
-              <div className="md:col-span-4">
-                <label className="text-[10px] sm:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2 block">
-                  RUT {errors.rut && <span className="text-red-500 ml-2">• {errors.rut}</span>}
-                </label>
-                <div className="relative">
-                  <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 dark:text-slate-600" />
-                  <input
-                    readOnly
-                    value={formData.rut || '00.000.000-0'}
-                    className={`w-full pl-12 pr-10 py-4 bg-slate-100 dark:bg-slate-700/50 border rounded-xl font-mono font-bold text-slate-500 dark:text-slate-400 outline-none text-sm ${errors.rut ? 'border-red-300' : 'border-slate-200 dark:border-slate-600'}`}
-                  />
-                  {formData.rut && validateRut(formData.rut) && (
-                    <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
-                  )}
-                </div>
-              </div>
-            </div>
+                    <div className="group/field">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3">Fecha Emisión</label>
+                      <input
+                        type="date"
+                        name="fechaDecreto"
+                        value={formData.fechaDecreto}
+                        onChange={handleChange}
+                        className="w-full bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-700 px-5 py-4 rounded-[14px] font-bold text-slate-800 dark:text-white outline-none focus:border-[#2F4DAA] text-sm shadow-sm transition-all group-hover/field:border-blue-100"
+                      />
+                    </div>
+                  </div>
 
-            {/* N° Acto y Materia */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">N° Acto Adm.</label>
-                <input
-                  name="acto"
-                  value={formData.acto}
-                  onChange={handleChange}
-                  className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-indigo-500 text-center text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Tipo Documento</label>
-                <select
-                  name="materia"
-                  value={formData.materia}
-                  onChange={handleChange}
-                  className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-bold text-slate-700 dark:text-slate-200 text-sm outline-none focus:border-indigo-500 cursor-pointer"
-                >
-                  <option value="Decreto Exento">Decreto Exento</option>
-                  <option value="Resolución Exenta">Resolución Exenta</option>
-                </select>
-              </div>
+                  <div className="mt-12">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-4 ml-1">Modalidad de Jornada</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {JORNADA_OPTIONS.map(option => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setFormData(p => ({ ...p, tipoJornada: option }))}
+                          className={`px-5 py-4 rounded-[16px] text-[11px] font-black transition-all duration-300 uppercase tracking-widest border-2 ${formData.tipoJornada === option
+                            ? 'bg-[#2F4DAA] text-white border-[#2F4DAA] shadow-[0px_10px_20px_rgba(47,77,170,0.2)]'
+                            : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-50 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-800'
+                            }`}
+                        >
+                          {option === 'Jornada completa' ? 'Completa' : option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Balance Premium PA */}
+                  <div className={`mt-10 p-6 rounded-[24px] flex items-center justify-between gap-6 border-2 shadow-sm transition-all ${isNegative ? 'bg-red-50/30 border-red-100 dark:border-red-900/20' : 'bg-emerald-50/30 border-emerald-100 dark:border-emerald-900/20'}`}>
+                    <div className="flex items-center gap-5">
+                      <div className={`w-14 h-14 rounded-[18px] flex items-center justify-center transition-all ${isNegative ? 'bg-red-100 dark:bg-red-900/50 text-red-600' : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600'}`}>
+                        {isNegative ? <AlertTriangle className="w-8 h-8" /> : <Info className="w-8 h-8" />}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Balance Post-Operación</p>
+                        <p className={`text-3xl font-black tracking-tight ${isNegative ? 'text-red-600' : 'text-emerald-700 dark:text-emerald-400'}`}>{saldoFinal} <span className="text-sm font-bold opacity-60 ml-0.5">DÍAS</span></p>
+                      </div>
+                    </div>
+                    {isNegative && (
+                      <div className="hidden sm:block text-right">
+                        <p className="text-xs font-bold text-red-800 dark:text-red-300">⚠️ Advertencia: Saldo insuficiente</p>
+                        <p className="text-[9px] font-black text-red-500/70 uppercase tracking-widest mt-1">Requiere regularización posterior</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ===================== SECCIÓN FL ===================== */}
+              {formData.solicitudType === 'FL' && (
+                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                  {/* Datos Maestros FL */}
+                  <div className="bg-orange-50/20 dark:bg-orange-900/10 p-8 sm:p-10 rounded-[24px] border border-orange-100 dark:border-orange-900/40 transition-all hover:bg-orange-50/40">
+                    <SectionTitle icon={Sun} title="Configuración del Feriado (FL)" color="border-orange-200 dark:border-orange-800 text-[#F59121]" />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
+                      <div className="group/field">
+                        <label className="text-[10px] font-black text-[#F59121] uppercase tracking-[0.2em] block mb-3 leading-none">Días de feriado</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          name="cantidadDias"
+                          value={formData.cantidadDias}
+                          onChange={handleChange}
+                          className={`w-full bg-white dark:bg-slate-800 border-2 px-4 py-4 rounded-[14px] font-black text-slate-900 dark:text-white outline-none focus:border-[#F59121] text-center text-lg shadow-sm transition-all ${errors.cantidadDias ? 'border-red-200' : 'border-slate-50 dark:border-slate-700 group-hover/field:border-orange-200'}`}
+                        />
+                      </div>
+
+                      <div className="group/field">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3 leading-none">Inicio del feriado</label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            name="fechaInicio"
+                            value={formData.fechaInicio}
+                            onChange={handleChange}
+                            className={`w-full bg-white dark:bg-slate-800 border-2 px-5 py-4 rounded-[14px] font-bold text-slate-800 dark:text-white outline-none focus:border-[#F59121] text-sm shadow-sm transition-all ${errors.fechaInicio ? 'border-red-200' : 'border-slate-50 dark:border-slate-700 group-hover/field:border-orange-100'}`}
+                          />
+                          {formData.fechaInicio && (
+                            <div className="absolute -bottom-6 left-1 text-[10px] font-black uppercase tracking-tight text-emerald-600 dark:text-emerald-400">
+                              {getDayName(formData.fechaInicio)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="group/field">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3 leading-none">Fin del feriado</label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            name="fechaTermino"
+                            value={formData.fechaTermino || ''}
+                            onChange={handleChange}
+                            className={`w-full bg-white dark:bg-slate-800 border-2 px-5 py-4 rounded-[14px] font-bold text-slate-800 dark:text-white outline-none focus:border-[#F59121] text-sm shadow-sm transition-all ${errors.fechaTermino ? 'border-red-200' : 'border-slate-50 dark:border-slate-700 group-hover/field:border-orange-100'}`}
+                          />
+                          {formData.fechaTermino && (
+                            <div className="absolute -bottom-6 left-1 text-[10px] font-black uppercase tracking-tight text-emerald-600 dark:text-emerald-400">
+                              {getDayName(formData.fechaTermino)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="group/field">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3 leading-none">Fecha Emisión</label>
+                        <input
+                          type="date"
+                          name="fechaDecreto"
+                          value={formData.fechaDecreto}
+                          onChange={handleChange}
+                          className="w-full bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-700 px-5 py-4 rounded-[14px] font-bold text-slate-800 dark:text-white outline-none focus:border-[#F59121] text-sm shadow-sm transition-all group-hover/field:border-orange-100"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Perímetros de Balance FL */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    {/* Período 1 */}
+                    <div className="bg-sky-50/30 dark:bg-sky-900/10 p-8 rounded-[24px] border border-sky-100 dark:border-sky-900/40 relative group/p1">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-sky-600 text-white rounded-xl flex items-center justify-center text-[18px] font-black shadow-lg shadow-sky-500/20">1</div>
+                          <div>
+                            <h4 className="text-[13px] font-black text-sky-700 dark:text-sky-300 uppercase tracking-widest">Saldo Período A</h4>
+                            <p className="text-[9px] font-bold text-sky-500/60 uppercase tracking-widest mt-0.5">Prioridad de descuento</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Etiq. Período</label>
+                            <input name="periodo1" value={formData.periodo1 || ''} onChange={handleChange} placeholder="2023-2024" className="w-full bg-white dark:bg-slate-800 border-2 border-sky-50/50 dark:border-sky-900/40 px-4 py-3.5 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-sky-500 text-sm text-center shadow-sm" />
+                          </div>
+                          <div className="space-y-3 relative">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Disp. Inicial</label>
+                            <input type="number" step="0.5" name="saldoDisponibleP1" value={formData.saldoDisponibleP1 || 0} onChange={handleChange} className="w-full bg-white dark:bg-slate-800 border-2 border-sky-50/50 dark:border-sky-900/40 px-4 py-3.5 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-sky-500 text-sm text-center shadow-sm" />
+                            {detectedSaldo !== null && (
+                              <div className="absolute -top-1 -right-1 bg-sky-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full shadow-sm">SYNC</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 items-end">
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Soli. Período</label>
+                            <input type="number" step="0.5" name="solicitadoP1" value={formData.solicitadoP1 || 0} onChange={handleChange} className="w-full bg-white dark:bg-slate-800 border-2 border-sky-50/50 dark:border-sky-900/40 px-4 py-3.5 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-sky-500 text-sm text-center shadow-sm" />
+                          </div>
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block ml-1">Resultante Final</label>
+                            <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-800/50 px-4 py-3.5 rounded-xl font-black text-emerald-700 dark:text-emerald-400 text-lg text-center shadow-sm transition-all">
+                              {saldoFinalP1.toFixed(1)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Período 2 */}
+                    <div className="bg-purple-50/30 dark:bg-purple-900/10 p-8 rounded-[24px] border border-purple-100 dark:border-purple-900/40 relative group/p2">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-purple-600 text-white rounded-xl flex items-center justify-center text-[18px] font-black shadow-lg shadow-purple-500/20">2</div>
+                          <div>
+                            <h4 className="text-[13px] font-black text-purple-700 dark:text-purple-300 uppercase tracking-widest">Saldo Período B</h4>
+                            <p className="text-[9px] font-bold text-purple-500/60 uppercase tracking-widest mt-0.5">Opcional / Segundo tramo</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Etiq. Período</label>
+                            <input name="periodo2" value={formData.periodo2 || ''} onChange={handleChange} placeholder="2024-2025" className="w-full bg-white dark:bg-slate-800 border-2 border-purple-50/50 dark:border-purple-900/40 px-4 py-3.5 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-purple-500 text-sm text-center shadow-sm" />
+                          </div>
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Disp. Inicial</label>
+                            <input type="number" step="0.5" name="saldoDisponibleP2" value={formData.saldoDisponibleP2 || 0} onChange={handleChange} className="w-full bg-white dark:bg-slate-800 border-2 border-purple-50/50 dark:border-purple-900/40 px-4 py-3.5 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-purple-500 text-sm text-center shadow-sm" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 items-end">
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Soli. Período</label>
+                            <input type="number" step="0.5" name="solicitadoP2" value={formData.solicitadoP2 || 0} onChange={handleChange} className="w-full bg-white dark:bg-slate-800 border-2 border-purple-50/50 dark:border-purple-900/40 px-4 py-3.5 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-purple-500 text-sm text-center shadow-sm" />
+                          </div>
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block ml-1">Resultante Final</label>
+                            <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-800/50 px-4 py-3.5 rounded-xl font-black text-emerald-700 dark:text-emerald-400 text-lg text-center shadow-sm transition-all">
+                              {saldoFinalP2.toFixed(1)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resumen Premium FL */}
+                  <div className="bg-orange-100/30 dark:bg-orange-900/20 p-8 rounded-[32px] border border-orange-200 dark:border-orange-800/50 flex items-center justify-between gap-8 transition-all hover:bg-orange-100/40 shadow-sm overflow-hidden relative">
+                    <div className="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-orange-400/10 to-transparent" />
+                    <div className="flex items-center gap-6 relative z-10">
+                      <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-[20px] flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-lg shadow-orange-500/10 ring-1 ring-orange-100 dark:ring-orange-800">
+                        <Sparkles className="w-9 h-9" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-black text-orange-700/60 dark:text-orange-400/60 uppercase tracking-[0.2em] mb-1.5">Duración Total de Feriado</p>
+                        <p className="text-4xl font-black text-orange-700 dark:text-orange-300 tracking-tight">{formData.cantidadDias} <span className="text-base font-black opacity-60 ml-1">DÍAS HÁBILES</span></p>
+                      </div>
+                    </div>
+                    <div className="hidden sm:block text-right relative z-10">
+                      <p className="text-xs font-bold text-orange-800 dark:text-orange-200">Decreto validado institucionalmente</p>
+                      <p className="text-[10px] font-bold text-orange-600/60 dark:text-orange-400/60 uppercase tracking-widest mt-1">GDP Cloud Certification Motor</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* ===================== SECCIÓN PA ===================== */}
-          {formData.solicitudType === 'PA' && (
-            <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-4 sm:p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
-              <SectionTitle icon={Clock} title="Datos del Permiso Administrativo" color="border-indigo-200 dark:border-indigo-800 text-indigo-600" />
-
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Saldo Anterior */}
-                <div className="relative">
-                  <label className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-2">Saldo Anterior</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    name="diasHaber"
-                    value={formData.diasHaber}
-                    onChange={handleChange}
-                    className="w-full bg-white dark:bg-slate-700 border border-indigo-200 dark:border-indigo-700 px-4 py-3 rounded-xl font-black text-indigo-900 dark:text-indigo-100 outline-none focus:border-indigo-500 text-center text-sm"
-                  />
-                  {detectedSaldo !== null && (
-                    <span className="absolute -top-1 right-2 bg-indigo-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full">SYNC</span>
-                  )}
-                </div>
-
-                {/* Días Solicitados */}
-                <div>
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
-                    Días Solicitados {errors.cantidadDias && <span className="text-red-500">•</span>}
-                  </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    name="cantidadDias"
-                    value={formData.cantidadDias}
-                    onChange={handleChange}
-                    min="0.5"
-                    max="30"
-                    className={`w-full bg-white dark:bg-slate-700 border px-4 py-3 rounded-xl font-black text-slate-900 dark:text-white outline-none focus:border-indigo-500 text-center text-sm ${errors.cantidadDias ? 'border-red-300' : 'border-slate-200 dark:border-slate-600'}`}
-                  />
-                </div>
-
-                {/* Fecha Inicio */}
-                <div>
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
-                    Fecha Inicio {errors.fechaInicio && <span className="text-red-500">•</span>}
-                  </label>
-                  <input
-                    type="date"
-                    name="fechaInicio"
-                    value={formData.fechaInicio}
-                    onChange={handleChange}
-                    className={`w-full bg-white dark:bg-slate-700 border px-4 py-3 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500 text-sm ${errors.fechaInicio ? 'border-red-300' : 'border-slate-200 dark:border-slate-600'}`}
-                  />
-                  {formData.fechaInicio && (
-                    <p className={`mt-1 text-[10px] font-bold ${isWeekend(formData.fechaInicio) ? 'text-red-500' : 'text-emerald-600'}`}>
-                      {getDayName(formData.fechaInicio)} {isWeekend(formData.fechaInicio) && '(Fin de semana)'}
-                    </p>
-                  )}
-                </div>
-
-                {/* Fecha Solicitud */}
-                <div>
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Fecha Solicitud</label>
-                  <input
-                    type="date"
-                    name="fechaDecreto"
-                    value={formData.fechaDecreto}
-                    onChange={handleChange}
-                    className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500 text-sm"
-                  />
-                  {formData.fechaDecreto && (
-                    <p className="mt-1 text-[10px] font-bold text-emerald-600">{getDayName(formData.fechaDecreto)}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Tipo Jornada */}
-              <div className="mt-4">
-                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Tipo de Jornada</label>
-                <div className="flex flex-wrap gap-2">
-                  {JORNADA_OPTIONS.map(option => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setFormData(p => ({ ...p, tipoJornada: option }))}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${formData.tipoJornada === option
-                        ? 'bg-indigo-600 text-white shadow-md'
-                        : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:border-indigo-400'
-                        }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Balance Final PA */}
-              <div className={`mt-6 p-4 rounded-xl flex items-center gap-4 ${isNegative ? 'bg-red-100 dark:bg-red-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30'}`}>
-                <Info className={`w-5 h-5 ${isNegative ? 'text-red-600' : 'text-emerald-600'}`} />
-                <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Balance Final Proyectado</p>
-                  <p className={`text-xl font-black ${isNegative ? 'text-red-600' : 'text-emerald-600'}`}>{saldoFinal} días</p>
-                </div>
-              </div>
+          {/* ===================== ÁREA DE ACCIÓN ===================== */}
+          <div className="pt-10 sm:pt-14 border-t border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-8">
+            <div className="flex-1 max-w-sm">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest text-center sm:text-left">
+                Esta acción generará un acto administrativo oficial. Asegúrese de que los datos sean correctos antes de proceder.
+              </p>
             </div>
-          )}
 
-          {/* ===================== SECCIÓN FL ===================== */}
-          {formData.solicitudType === 'FL' && (
-            <div className="space-y-6">
-              {/* Datos del Feriado */}
-              <div className="bg-amber-50/50 dark:bg-amber-900/10 p-4 sm:p-6 rounded-2xl border border-amber-100 dark:border-amber-800/30">
-                <SectionTitle icon={Sun} title="Datos del Feriado Legal" color="border-amber-200 dark:border-amber-800 text-amber-600" />
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Días Solicitados */}
-                  <div>
-                    <label className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest block mb-2">
-                      Días Solicitados {errors.cantidadDias && <span className="text-red-500">•</span>}
-                    </label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      name="cantidadDias"
-                      value={formData.cantidadDias}
-                      onChange={handleChange}
-                      min="0.5"
-                      max="30"
-                      className={`w-full bg-white dark:bg-slate-700 border px-4 py-3 rounded-xl font-black text-amber-900 dark:text-amber-100 outline-none focus:border-amber-500 text-center text-sm ${errors.cantidadDias ? 'border-red-300' : 'border-amber-200 dark:border-amber-700'}`}
-                    />
-                  </div>
-
-                  {/* Fecha Inicio */}
-                  <div>
-                    <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
-                      Fecha Inicio {errors.fechaInicio && <span className="text-red-500">•</span>}
-                    </label>
-                    <input
-                      type="date"
-                      name="fechaInicio"
-                      value={formData.fechaInicio}
-                      onChange={handleChange}
-                      className={`w-full bg-white dark:bg-slate-700 border px-4 py-3 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-amber-500 text-sm ${errors.fechaInicio ? 'border-red-300' : 'border-slate-200 dark:border-slate-600'}`}
-                    />
-                    {formData.fechaInicio && (
-                      <p className={`mt-1 text-[10px] font-bold ${isWeekend(formData.fechaInicio) ? 'text-red-500' : 'text-emerald-600'}`}>
-                        {getDayName(formData.fechaInicio)}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Fecha Término */}
-                  <div>
-                    <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
-                      Fecha Término {errors.fechaTermino && <span className="text-red-500">•</span>}
-                    </label>
-                    <input
-                      type="date"
-                      name="fechaTermino"
-                      value={formData.fechaTermino || ''}
-                      onChange={handleChange}
-                      className={`w-full bg-white dark:bg-slate-700 border px-4 py-3 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-amber-500 text-sm ${errors.fechaTermino ? 'border-red-300' : 'border-slate-200 dark:border-slate-600'}`}
-                    />
-                    {formData.fechaTermino && (
-                      <p className="mt-1 text-[10px] font-bold text-emerald-600">{getDayName(formData.fechaTermino)}</p>
-                    )}
-                  </div>
-
-                  {/* Fecha Emisión */}
-                  <div>
-                    <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Fecha Emisión</label>
-                    <input
-                      type="date"
-                      name="fechaDecreto"
-                      value={formData.fechaDecreto}
-                      onChange={handleChange}
-                      className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-amber-500 text-sm"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Período 1 */}
-              <div className="bg-sky-50/50 dark:bg-sky-900/10 p-4 sm:p-6 rounded-2xl border border-sky-100 dark:border-sky-800/30">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="w-8 h-8 bg-sky-600 text-white rounded-lg flex items-center justify-center text-sm font-black">1</span>
-                  <h4 className="text-sm font-black text-sky-700 dark:text-sky-300 uppercase tracking-widest">Período 1</h4>
-                </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Período</label>
-                    <input name="periodo1" value={formData.periodo1 || ''} onChange={handleChange} placeholder="2024-2025" className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-sky-500 text-sm text-center" />
-                  </div>
-                  <div className="relative">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Saldo Disponible</label>
-                    <input type="number" step="0.5" name="saldoDisponibleP1" value={formData.saldoDisponibleP1 || 0} onChange={handleChange} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-sky-500 text-sm text-center" />
-                    {detectedSaldo !== null && (
-                      <span className="absolute -top-1 right-2 bg-sky-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full">SYNC</span>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Solicitado</label>
-                    <input type="number" step="0.5" name="solicitadoP1" value={formData.solicitadoP1 || 0} onChange={handleChange} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-sky-500 text-sm text-center" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-2">Saldo Final</label>
-                    <input type="number" readOnly value={saldoFinalP1} className="w-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 px-4 py-3 rounded-xl font-black text-emerald-700 dark:text-emerald-300 outline-none text-sm text-center" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Período 2 */}
-              <div className="bg-purple-50/50 dark:bg-purple-900/10 p-4 sm:p-6 rounded-2xl border border-purple-100 dark:border-purple-800/30">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="w-8 h-8 bg-purple-600 text-white rounded-lg flex items-center justify-center text-sm font-black">2</span>
-                  <h4 className="text-sm font-black text-purple-700 dark:text-purple-300 uppercase tracking-widest">Período 2</h4>
-                  <span className="text-[10px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">(Opcional)</span>
-                </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Período</label>
-                    <input name="periodo2" value={formData.periodo2 || ''} onChange={handleChange} placeholder="2025-2026" className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-bold text-slate-800 dark:text-white outline-none focus:border-purple-500 text-sm text-center" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Saldo Disponible</label>
-                    <input type="number" step="0.5" name="saldoDisponibleP2" value={formData.saldoDisponibleP2 || 0} onChange={handleChange} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-purple-500 text-sm text-center" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Solicitado</label>
-                    <input type="number" step="0.5" name="solicitadoP2" value={formData.solicitadoP2 || 0} onChange={handleChange} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-3 rounded-xl font-black text-slate-800 dark:text-white outline-none focus:border-purple-500 text-sm text-center" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-2">Saldo Final</label>
-                    <input type="number" readOnly value={saldoFinalP2} className="w-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 px-4 py-3 rounded-xl font-black text-emerald-700 dark:text-emerald-300 outline-none text-sm text-center" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Resumen FL */}
-              <div className="bg-amber-100 dark:bg-amber-900/30 p-4 rounded-xl flex items-center gap-4">
-                <Sparkles className="w-5 h-5 text-amber-600" />
-                <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Días Feriado Legal</p>
-                  <p className="text-xl font-black text-amber-600">{formData.cantidadDias} días</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ===================== BOTÓN SUBMIT ===================== */}
-          <div className="flex justify-end pt-4">
             <button
               type="submit"
-              className={`w-full sm:w-auto flex items-center justify-center gap-3 px-6 sm:px-10 py-4 ${editingRecord
-                ? 'bg-amber-500 hover:bg-amber-600'
+              className={`w-full sm:w-auto flex items-center justify-center gap-4 px-12 py-6 rounded-[20px] text-[13px] font-black uppercase tracking-[0.2em] transition-all duration-500 active:scale-95 shadow-2xl relative overflow-hidden group/submit ${editingRecord
+                ? 'bg-gradient-to-r from-[#F59121] to-[#d4791a] text-white shadow-orange-500/30'
                 : formData.solicitudType === 'PA'
-                  ? 'bg-indigo-600 hover:bg-indigo-700'
-                  : 'bg-amber-500 hover:bg-amber-600'
-                } text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 uppercase text-xs tracking-widest`}
+                  ? 'bg-gradient-to-r from-[#2F4DAA] to-[#1A2B56] text-white shadow-blue-500/30'
+                  : 'bg-gradient-to-r from-[#F59121] to-[#d4791a] text-white shadow-orange-500/30'
+                }`}
             >
-              {editingRecord ? <Save className="w-5 h-5" /> : <PlusCircle className="w-5 h-5" />}
-              {editingRecord ? 'Actualizar Decreto' : 'Emitir Resolución'}
+              <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transform scale-x-0 group-hover/submit:scale-x-100 transition-transform duration-700 origin-left" />
+              {editingRecord ? <Save className="w-6 h-6 animate-pulse" /> : <PlusCircle className="w-6 h-6 group-hover/submit:rotate-90 transition-transform duration-500" />}
+              <span>{editingRecord ? 'Actualizar Resolución' : 'Emitir Resolución'}</span>
             </button>
           </div>
         </div>

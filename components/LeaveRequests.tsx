@@ -152,33 +152,35 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Nombre: ${emp.firstName} ${emp.lastName}`, 30, 60);
-    doc.text(`Cargo: ${emp.position}`, 30, 67);
-    doc.text(`Departamento: ${emp.department}`, 30, 74);
-    doc.text(`Email: ${emp.email}`, 30, 81);
+    const fullName = `${emp.firstName} ${emp.lastNamePaternal} ${emp.lastNameMaternal}`.trim();
+    doc.text(`Nombre: ${fullName}`, 30, 60);
+    doc.text(`RUT: ${emp.rut || 'No Registrado'}`, 30, 67);
+    doc.text(`Cargo: ${emp.position}`, 30, 74);
+    doc.text(`Departamento: ${emp.department}`, 30, 81);
+    doc.text(`Email: ${emp.email}`, 30, 88);
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("II. DETALLE DE LA SOLICITUD", 20, 100);
+    doc.text("II. DETALLE DE LA SOLICITUD", 20, 105);
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Tipo de Permiso: ${request.type}`, 30, 110);
-    doc.text(`Jornada: ${request.shift || 'Jornada Completa'}`, 30, 117);
-    doc.text(`Desde: ${formatDate(request.startDate)}`, 30, 124);
-    doc.text(`Hasta: ${formatDate(request.endDate)}`, 100, 124);
-    doc.text(`Días Totales Calculados: ${request.daysCount}`, 30, 131);
+    doc.text(`Tipo de Permiso: ${request.type}`, 30, 115);
+    doc.text(`Jornada: ${request.shift || 'Jornada Completa'}`, 30, 122);
+    doc.text(`Desde: ${formatDate(request.startDate)}`, 30, 129);
+    doc.text(`Hasta: ${formatDate(request.endDate)}`, 100, 129);
+    doc.text(`Días Totales Calculados: ${request.daysCount}`, 30, 136);
 
     if (request.reason) {
-      doc.text(`Motivo/Observación: ${request.reason}`, 30, 140, { maxWidth: 160 });
+      doc.text(`Motivo/Observación: ${request.reason}`, 30, 145, { maxWidth: 160 });
     }
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("III. RESOLUCIÓN", 20, 160);
+    doc.text("III. RESOLUCIÓN", 20, 165);
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Estado: ${request.status.toUpperCase()}`, 30, 170);
+    doc.text(`Estado: ${request.status.toUpperCase()}`, 30, 175);
 
     doc.line(30, 240, 90, 240);
     doc.text("Firma Funcionario", 45, 245);
@@ -189,7 +191,7 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
     doc.setFontSize(8);
     doc.text("Documento generado automáticamente por Sistema de Gestión HR.", 105, 280, { align: "center" });
 
-    doc.save(`Resolucion_${emp.lastName}_${request.startDate}.pdf`);
+    doc.save(`Resolucion_${emp.lastNamePaternal}_${request.startDate}.pdf`);
   };
 
   return (
@@ -221,7 +223,7 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
               >
                 <option value="">Seleccionar...</option>
                 {employees.map(e => (
-                  <option key={e.id} value={e.id}>{e.firstName} {e.lastName}</option>
+                  <option key={e.id} value={e.id}>{e.firstName} {e.lastNamePaternal} {e.lastNameMaternal}</option>
                 ))}
               </select>
             </div>
@@ -370,6 +372,7 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
           ) : (
             paginatedRequests.map((req) => {
               const emp = getEmployee(req.employeeId);
+              const empName = emp ? `${emp.firstName} ${emp.lastNamePaternal} ${emp.lastNameMaternal}`.trim() : 'Funcionario Desconocido';
               return (
                 <div key={req.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
                   <div className="flex gap-4">
@@ -378,7 +381,7 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="font-semibold text-slate-900">{emp?.firstName} {emp?.lastName}</h4>
+                        <h4 className="font-semibold text-slate-900">{empName}</h4>
                         <span className={getShiftBadgeClasses(req.shift || WorkShift.JC)}>
                           {req.shift || 'JC'}
                         </span>
@@ -404,7 +407,7 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
                           }}
                           className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
                           title="Descargar Resolución PDF"
-                          aria-label={`Descargar PDF de resolución para ${emp?.firstName} ${emp?.lastName}`}
+                          aria-label={`Descargar PDF de resolución para ${empName}`}
                         >
                           <FileDown size={18} />
                         </button>
@@ -416,7 +419,7 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
                             onClick={() => updateRequestStatus(req.id, LeaveStatus.APPROVED)}
                             className="p-2 bg-emerald-100 text-emerald-600 rounded-full hover:bg-emerald-200 transition-colors"
                             title="Aprobar"
-                            aria-label={`Aprobar solicitud de ${emp?.firstName} ${emp?.lastName}`}
+                            aria-label={`Aprobar solicitud de ${empName}`}
                           >
                             <Check size={18} />
                           </button>
@@ -424,7 +427,7 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
                             onClick={() => updateRequestStatus(req.id, LeaveStatus.REJECTED)}
                             className="p-2 bg-rose-100 text-rose-600 rounded-full hover:bg-rose-200 transition-colors"
                             title="Rechazar"
-                            aria-label={`Rechazar solicitud de ${emp?.firstName} ${emp?.lastName}`}
+                            aria-label={`Rechazar solicitud de ${empName}`}
                           >
                             <X size={18} />
                           </button>
@@ -455,8 +458,8 @@ export const LeaveRequests: React.FC<LeaveRequestsProps> = ({ requests, employee
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:bg-white hover:text-indigo-600'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-white hover:text-indigo-600'
                     }`}
                   aria-label={`Ir a página ${page}`}
                   aria-current={currentPage === page ? 'page' : undefined}

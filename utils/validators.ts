@@ -30,7 +30,8 @@ export const validateEmployee = (obj: unknown): obj is Employee => {
     return (
         isString(e.id) &&
         isString(e.firstName) &&
-        isString(e.lastName) &&
+        isString(e.lastNamePaternal) &&
+        isString(e.lastNameMaternal) &&
         isString(e.email) &&
         isString(e.position) &&
         isString(e.department) &&
@@ -46,7 +47,7 @@ export const validateEmployee = (obj: unknown): obj is Employee => {
         e.usedSickLeaveDays <= e.totalSickLeaveDays &&
         hasValue(e.id) &&
         hasValue(e.firstName) &&
-        hasValue(e.lastName) &&
+        hasValue(e.lastNamePaternal) &&
         hasValue(e.email) &&
         e.email.includes('@')
     );

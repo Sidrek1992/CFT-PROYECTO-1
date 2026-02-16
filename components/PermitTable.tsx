@@ -173,8 +173,8 @@ const PermitTable: React.FC<PermitTableProps> = ({
   const SortIcon = useCallback(({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown size={10} className="opacity-20 ml-auto group-hover:opacity-100 transition-opacity" />;
     return sortOrder === 'asc'
-      ? <ChevronUp size={12} className="ml-auto text-indigo-500" />
-      : <ChevronDown size={12} className="ml-auto text-indigo-500" />;
+      ? <ChevronUp size={12} className="ml-auto text-[#2F4DAA]" />
+      : <ChevronDown size={12} className="ml-auto text-[#2F4DAA]" />;
   }, [sortField, sortOrder]);
 
   const handleGeneratePDF = useCallback(async (record: PermitRecord, _forcePdf: boolean) => {
@@ -211,44 +211,46 @@ const PermitTable: React.FC<PermitTableProps> = ({
   }, [previewRecord, handleGeneratePDF]);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6 sm:space-y-8">
       {/* ★ Toolbar de Selección Múltiple */}
       {selectedIds.size > 0 && (
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-4 sm:px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-xl page-fade-in">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white/15 px-3 py-1.5 rounded-xl">
-              <CheckSquare size={14} />
-              <span className="text-xs font-black">{selectedIds.size}</span>
+        <div className="bg-[#2F4DAA] text-white px-6 py-4.5 rounded-[24px] flex items-center justify-between shadow-[0px_20px_50px_rgba(47,77,170,0.2)] page-fade-in border border-white/10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent pointer-none" />
+          <div className="flex items-center gap-5 relative z-10">
+            <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl ring-1 ring-white/20">
+              <CheckSquare size={16} className="text-emerald-300" />
+              <span className="text-sm font-black tracking-tight">{selectedIds.size}</span>
             </div>
-            <span className="text-[11px] font-bold text-white/70 uppercase tracking-wider hidden sm:inline">
-              seleccionado{selectedIds.size > 1 ? 's' : ''}
-            </span>
+            <div className="hidden sm:block">
+              <span className="text-[11px] font-black text-white/90 uppercase tracking-[0.1em]">
+                Registro{selectedIds.size > 1 ? 's' : ''} seleccionado{selectedIds.size > 1 ? 's' : ''}
+              </span>
+              <p className="text-[9px] font-bold text-white/50 uppercase tracking-wider mt-0.5">Acciones masivas disponibles</p>
+            </div>
             <button
               onClick={clearSelection}
-              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/20 rounded-xl transition-all active:scale-90"
               title="Deseleccionar"
             >
-              <X size={14} />
+              <X size={16} />
             </button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 relative z-10">
             {!isBatchGenerating && (
               <>
                 <button
                   onClick={() => handleBatchGenerate('individual')}
-                  className="flex items-center gap-2 px-3.5 py-2 bg-white text-indigo-600 rounded-xl text-[10px] sm:text-[11px] font-black hover:bg-indigo-50 transition-all active:scale-95 shadow-lg uppercase tracking-wider"
-                  title="Cada decreto se descarga individualmente apenas se genera"
+                  className="flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#2F4DAA] rounded-xl text-[11px] font-black hover:shadow-lg transition-all active:scale-95 uppercase tracking-widest shadow-sm"
                 >
-                  <Download size={14} />
-                  <span className="hidden sm:inline">Descargar </span>Uno a uno
+                  <Download size={16} />
+                  <span className="hidden sm:inline">Descargar uno a uno</span>
                 </button>
                 <button
                   onClick={() => handleBatchGenerate('zip')}
-                  className="flex items-center gap-2 px-3.5 py-2 bg-emerald-500 text-white rounded-xl text-[10px] sm:text-[11px] font-black hover:bg-emerald-400 transition-all active:scale-95 shadow-lg uppercase tracking-wider"
-                  title="Todos los decretos se descargan en un solo archivo ZIP"
+                  className="flex items-center gap-2.5 px-5 py-2.5 bg-emerald-500 text-white rounded-xl text-[11px] font-black hover:bg-emerald-400 hover:shadow-lg transition-all active:scale-95 uppercase tracking-widest shadow-sm border border-emerald-400/50"
                 >
-                  <Archive size={14} />
-                  <span className="hidden sm:inline">Descargar </span>ZIP
+                  <Archive size={16} />
+                  <span className="hidden sm:inline">Descargar ZIP</span>
                 </button>
               </>
             )}
@@ -258,97 +260,83 @@ const PermitTable: React.FC<PermitTableProps> = ({
 
       {/* ★ Modal de Progreso de Generación */}
       {isBatchGenerating && batchProgressInfo && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 notification-backdrop-enter">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" />
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden notification-panel-enter">
-            {/* Header */}
-            <div className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800" />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
-              <div className="relative p-6 text-white">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 bg-white/10 backdrop-blur rounded-xl ring-1 ring-white/20">
-                    {batchProgressInfo.status === 'done'
-                      ? <CheckCircle className="w-5 h-5 text-emerald-300" />
-                      : batchProgressInfo.status === 'zipping'
-                        ? <Archive className="w-5 h-5 animate-pulse" />
-                        : <FileText className="w-5 h-5" />
-                    }
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black uppercase tracking-wider">GDP Cloud</h3>
-                    <p className="text-[10px] font-bold text-white/80 tracking-wide mt-0.5">
-                      Espere un momento se está generando el decreto
-                    </p>
-                  </div>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#1A2B56]/40 backdrop-blur-sm animate-in fade-in duration-500" />
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-[32px] shadow-[0px_40px_100px_rgba(0,0,0,0.15)] overflow-hidden animate-in zoom-in-95 duration-500 border border-slate-100 dark:border-slate-700">
+            {/* Header Moderno */}
+            <div className="relative h-48 overflow-hidden bg-[#2F4DAA]">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#2F4DAA] via-[#2F4DAA] to-[#1A2B56]" />
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+              <div className="relative p-10 flex flex-col h-full justify-between items-center text-center">
+                <div className="p-4 bg-white/10 backdrop-blur-xl rounded-[24px] ring-1 ring-white/20 shadow-2xl">
+                  {batchProgressInfo.status === 'done'
+                    ? <CheckCircle className="w-8 h-8 text-emerald-300" />
+                    : batchProgressInfo.status === 'zipping'
+                      ? <Archive className="w-8 h-8 text-white animate-bounce" />
+                      : <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+                  }
                 </div>
-
-                {/* Progress counter */}
-                <div className="text-3xl font-black mb-3">
-                  {batchProgressInfo.current} <span className="text-base font-bold text-white/40">/ {batchProgressInfo.total}</span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${(batchProgressInfo.current / batchProgressInfo.total) * 100}%` }}
-                  />
+                <div>
+                  <h3 className="text-white text-lg font-black tracking-tight uppercase">
+                    {batchProgressInfo.status === 'done' ? 'Proceso Completado' : 'Generando Documentos'}
+                  </h3>
+                  <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-1">GDP Cloud - Sistema de Gestión</p>
                 </div>
               </div>
             </div>
 
-            {/* Current file indicator */}
-            <div className="p-5">
-              {batchProgressInfo.status !== 'done' && batchProgressInfo.currentFile && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3.5 border border-blue-200 dark:border-blue-800/40">
-                  <p className="text-[9px] font-black text-blue-600 dark:text-blue-300 uppercase tracking-widest mb-1">
-                    {batchProgressInfo.status === 'downloading' ? '⬇️ Descargando' : batchProgressInfo.status === 'zipping' ? '📦 Empaquetando' : '📄 Procesando'}
+            <div className="p-8 space-y-8">
+              {/* Progress counter circular-like info */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Progreso Actual</p>
+                  <div className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter">
+                    {Math.round((batchProgressInfo.current / batchProgressInfo.total) * 100)}<span className="text-xl text-slate-300 ml-1">%</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Procesado</p>
+                  <div className="text-xl font-black text-[#2F4DAA] dark:text-blue-400">
+                    {batchProgressInfo.current} <span className="text-slate-300 mx-1">/</span> {batchProgressInfo.total}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress bar Premium */}
+              <div className="h-3 bg-slate-100 dark:bg-slate-700/50 rounded-full overflow-hidden p-0.5 border border-slate-50 dark:border-slate-700">
+                <div
+                  className="h-full bg-gradient-to-r from-[#2F4DAA] to-[#F59121] rounded-full transition-all duration-700 ease-out shadow-[0px_0px_10px_rgba(47,77,170,0.3)]"
+                  style={{ width: `${(batchProgressInfo.current / batchProgressInfo.total) * 100}%` }}
+                />
+              </div>
+
+              {/* Current file / Status */}
+              {batchProgressInfo.status !== 'done' && (
+                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 text-center">
+                  <p className="text-[10px] font-black text-[#F59121] uppercase tracking-[0.2em] mb-2 animate-pulse">
+                    {batchProgressInfo.status === 'downloading' ? 'Descargando Archivos' : batchProgressInfo.status === 'zipping' ? 'Comprimiendo Paquete' : 'Preparando Motor PDF'}
                   </p>
-                  <p className="text-[11px] font-bold text-blue-700 dark:text-blue-200 truncate">
-                    {batchProgressInfo.currentFile}
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300 truncate px-4">
+                    {batchProgressInfo.currentFile || 'Inicializando componentes...'}
                   </p>
                 </div>
               )}
 
-              {/* Result summary */}
+              {/* Final Results */}
               {batchProgressInfo.status === 'done' && batchProgressInfo.result && (
-                <div className="space-y-3">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-800/40">
-                    <p className="text-[11px] font-bold text-blue-700 dark:text-blue-200 text-center">
-                      GDP Cloud - Espere un momento se está generando el decreto
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center border border-blue-200 dark:border-blue-800/40">
-                      <p className="text-lg font-black text-blue-700 dark:text-blue-300">{batchProgressInfo.result.success}</p>
-                      <p className="text-[9px] font-bold text-blue-600/80 uppercase tracking-widest">Exitosos</p>
+                <div className="animate-in slide-in-from-bottom-4 duration-500">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl p-4 border border-emerald-100 dark:border-emerald-800/50 text-center">
+                      <p className="text-2xl font-black text-emerald-600">{batchProgressInfo.result.success}</p>
+                      <p className="text-[9px] font-black text-emerald-500/70 uppercase tracking-widest mt-1">Exitosos</p>
                     </div>
-                    {batchProgressInfo.result.failed > 0 && (
-                      <div className="flex-1 bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center border border-red-100 dark:border-red-800/50">
-                        <p className="text-lg font-black text-red-600 dark:text-red-400">{batchProgressInfo.result.failed}</p>
-                        <p className="text-[9px] font-bold text-red-500/70 uppercase tracking-widest">Con error</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Error list */}
-                  {batchProgressInfo.result.errors.length > 0 && (
-                    <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar">
-                      {batchProgressInfo.result.errors.map((err, idx) => (
-                        <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800/50">
-                          <AlertCircle size={12} className="text-red-500 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-red-700 dark:text-red-300 truncate">{err.decreto} — {err.funcionario}</p>
-                            <p className="text-[9px] text-red-500/70 truncate">{err.error}</p>
-                          </div>
-                        </div>
-                      ))}
+                    <div className={`rounded-2xl p-4 border text-center ${batchProgressInfo.result.failed > 0 ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-800/50' : 'bg-slate-50 dark:bg-slate-900/10 border-slate-100 dark:border-slate-800'}`}>
+                      <p className={`text-2xl font-black ${batchProgressInfo.result.failed > 0 ? 'text-red-500' : 'text-slate-300'}`}>{batchProgressInfo.result.failed}</p>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Errores</p>
                     </div>
-                  )}
-
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center font-bold uppercase tracking-wider">
-                    Cerrando automáticamente...
+                  </div>
+                  <p className="text-[10px] text-slate-400 text-center font-bold uppercase tracking-widest animate-pulse">
+                    Cerrando en un momento...
                   </p>
                 </div>
               )}
@@ -357,22 +345,32 @@ const PermitTable: React.FC<PermitTableProps> = ({
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="relative max-w-2xl">
-        <div className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
-          <Search size={16} className="sm:hidden" />
-          <Search size={18} className="hidden sm:block" />
+      {/* Search Bar Premium Buk */}
+      <div className="relative group max-w-4xl mx-auto transition-all duration-700">
+        <div className="absolute -inset-1 bg-gradient-to-r from-[#2F4DAA]/5 to-[#F59121]/5 rounded-[30px] blur-xl opacity-0 group-focus-within:opacity-100 transition duration-1000" />
+        <div className="relative">
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-br from-[#2F4DAA] to-[#1A2B56] rounded-2xl text-white shadow-xl shadow-blue-500/20 group-focus-within:scale-110 transition-all duration-500 z-10">
+            <Search size={22} strokeWidth={2.5} />
+          </div>
+          <input
+            placeholder="Buscar por decreto, funcionario o RUT..."
+            className="w-full pl-22 pr-12 py-6 bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-700 rounded-[28px] shadow-[0px_15px_50px_rgba(26,43,86,0.04)] outline-none focus:bg-white focus:border-[#2F4DAA] focus:ring-[12px] focus:ring-blue-100 dark:focus:ring-blue-900/10 transition-all font-bold text-[15px] text-slate-800 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 group-hover:border-slate-100 dark:group-hover:border-slate-600"
+            value={search}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearch(value);
+              onSearchTermChange?.(value);
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => { setSearch(''); onSearchTermChange?.(''); }}
+              className="absolute right-6 top-1/2 -translate-y-1/2 p-2.5 bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all active:scale-90"
+            >
+              <X size={16} strokeWidth={3} />
+            </button>
+          )}
         </div>
-        <input
-          placeholder="Buscar decreto, funcionario o RUT..."
-          className="w-full pl-12 sm:pl-14 pr-4 sm:pr-6 py-3.5 sm:py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-lg outline-none focus:ring-4 focus:ring-indigo-50 dark:focus:ring-indigo-900/50 focus:border-indigo-200 dark:focus:border-indigo-700 transition-all font-bold text-[11px] sm:text-xs uppercase tracking-wide sm:tracking-widest text-slate-700 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600"
-          value={search}
-          onChange={(e) => {
-            const value = e.target.value;
-            setSearch(value);
-            onSearchTermChange?.(value);
-          }}
-        />
       </div>
 
       {/* Filtros Avanzados */}
@@ -382,193 +380,227 @@ const PermitTable: React.FC<PermitTableProps> = ({
         onReset={() => setAdvFilters(emptyFilters)}
       />
 
-      {/* Table Container */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+      {/* Table Container Premium Buk */}
+      <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0px_20px_60px_rgba(26,43,86,0.05)] border border-slate-100 dark:border-slate-700/50 overflow-hidden transition-all duration-500 hover:shadow-[0px_25px_70px_rgba(26,43,86,0.08)]">
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse table-auto">
+          <table className="w-full text-left border-separate border-spacing-0">
             <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700">
-                {/* ★ Checkbox para seleccionar todos */}
-                <th className="pl-4 sm:pl-6 py-4 sm:py-6 w-8">
+              <tr className="bg-slate-50/50 dark:bg-slate-900/40">
+                {/* ★ Checkbox superior */}
+                <th className="pl-8 py-7 w-16 border-b border-slate-100 dark:border-slate-700/50">
                   <button
                     onClick={selectAll}
-                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                    className={`w-11 h-11 rounded-[14px] transition-all duration-500 shadow-sm flex items-center justify-center border-2 ${selectedIds.size > 0 && selectedIds.size === filtered.length
+                      ? 'bg-gradient-to-br from-[#2F4DAA] to-[#1A2B56] text-white border-transparent shadow-blue-500/20'
+                      : 'bg-white dark:bg-slate-800 text-slate-200 dark:text-slate-700 border-slate-100 dark:border-slate-700 hover:border-blue-200 hover:text-blue-400'}`}
                   >
                     {selectedIds.size > 0 && selectedIds.size === filtered.length ? (
-                      <CheckSquare size={18} className="text-indigo-600 dark:text-indigo-400" />
+                      <CheckSquare size={20} strokeWidth={2.5} />
                     ) : (
-                      <Square size={18} className="text-slate-300 dark:text-slate-600" />
+                      <Square size={20} strokeWidth={2} />
                     )}
                   </button>
                 </th>
                 <th
                   onClick={() => handleSort('acto')}
-                  className="pr-2 sm:pr-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors group select-none"
+                  className="px-4 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-all select-none group"
                 >
-                  <div className="flex items-center gap-2">Decreto <SortIcon field="acto" /></div>
+                  <div className="flex items-center gap-2.5">
+                    Decreto
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <SortIcon field="acto" />
+                    </div>
+                  </div>
                 </th>
                 <th
                   onClick={() => handleSort('funcionario')}
-                  className="px-2 sm:px-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors group select-none"
+                  className="px-6 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-all select-none group"
                 >
-                  <div className="flex items-center gap-2">Funcionario <SortIcon field="funcionario" /></div>
+                  <div className="flex items-center gap-2.5">
+                    Funcionario
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <SortIcon field="funcionario" />
+                    </div>
+                  </div>
                 </th>
                 <th
                   onClick={() => handleSort('solicitudType')}
-                  className="px-2 sm:px-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors group select-none hidden sm:table-cell"
+                  className="px-6 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-all select-none group hidden sm:table-cell"
                 >
-                  <div className="flex items-center gap-2">Tipo <SortIcon field="solicitudType" /></div>
+                  <div className="flex items-center gap-2.5">
+                    Tipo
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <SortIcon field="solicitudType" />
+                    </div>
+                  </div>
                 </th>
                 {(activeTab === 'FL' || activeTab === 'ALL') && (
-                  <th
-                    className="px-2 sm:px-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 hidden md:table-cell"
-                  >
-                    <div className="flex items-center gap-2">Período</div>
+                  <th className="px-6 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 hidden md:table-cell">
+                    Período
                   </th>
                 )}
                 <th
                   onClick={() => handleSort('cantidadDias')}
-                  className="px-2 sm:px-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors group select-none"
+                  className="px-6 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-all select-none group"
                 >
-                  <div className="flex items-center gap-2">Días <SortIcon field="cantidadDias" /></div>
+                  <div className="flex items-center gap-2.5">
+                    Días
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <SortIcon field="cantidadDias" />
+                    </div>
+                  </div>
                 </th>
                 <th
                   onClick={() => handleSort('saldo')}
-                  className="px-2 sm:px-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors group select-none hidden sm:table-cell"
+                  className="px-6 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-all select-none group hidden sm:table-cell"
                 >
-                  <div className="flex items-center gap-2">Saldo <SortIcon field="saldo" /></div>
+                  <div className="flex items-center gap-2.5">
+                    Saldo
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <SortIcon field="saldo" />
+                    </div>
+                  </div>
                 </th>
                 <th
                   onClick={() => handleSort('fechaInicio')}
-                  className="px-2 sm:px-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors group select-none hidden sm:table-cell"
+                  className="px-6 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-all select-none group hidden sm:table-cell"
                 >
-                  <div className="flex items-center gap-2">Inicio <SortIcon field="fechaInicio" /></div>
+                  <div className="flex items-center gap-2.5">
+                    Inicio
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <SortIcon field="fechaInicio" />
+                    </div>
+                  </div>
                 </th>
                 {(activeTab === 'FL' || activeTab === 'ALL') && (
-                  <th
-                    className="px-2 sm:px-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 hidden lg:table-cell"
-                  >
-                    <div className="flex items-center gap-2">Término</div>
+                  <th className="px-6 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 hidden lg:table-cell">
+                    Término
                   </th>
                 )}
                 <th
                   onClick={() => handleSort('fechaDecreto')}
-                  className="px-2 sm:px-3 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors group select-none hidden lg:table-cell"
+                  className="px-6 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-all select-none group hidden lg:table-cell"
                 >
-                  <div className="flex items-center gap-2">Emisión <SortIcon field="fechaDecreto" /></div>
+                  <div className="flex items-center gap-2.5">
+                    Emisión
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <SortIcon field="fechaDecreto" />
+                    </div>
+                  </div>
                 </th>
-                <th className="pl-2 sm:pl-3 pr-4 sm:pr-8 py-4 sm:py-6 text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.2em] text-slate-400 dark:text-slate-500 text-right">
+                <th className="pr-10 py-7 border-b border-slate-100 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 text-right">
                   Acciones
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
-              {paginatedData.map(record => {
+              {paginatedData.map((record, index) => {
                 const isSelected = selectedIds.has(record.id);
+                const isPA = record.solicitudType === 'PA';
                 return (
                   <tr
                     key={record.id}
-                    className={`hover:bg-indigo-50/20 dark:hover:bg-indigo-900/10 transition-all group/row ${isSelected ? 'bg-indigo-50/40 dark:bg-indigo-900/20' : ''}`}
+                    className={`group/row transition-all duration-300 ${isSelected ? 'bg-blue-50/40 dark:bg-blue-900/10' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30'}`}
                   >
-                    {/* ★ Checkbox de selección individual */}
-                    <td className="pl-4 sm:pl-6 py-4 sm:py-5 w-10">
+                    <td className="pl-8 py-5">
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleSelect(record.id); }}
-                        className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                        className={`w-11 h-11 rounded-[14px] transition-all duration-500 shadow-sm flex items-center justify-center border-2 ${isSelected
+                          ? 'bg-gradient-to-br from-[#F59121] to-[#d4791a] text-white border-transparent shadow-orange-500/25'
+                          : 'bg-white dark:bg-slate-800 text-slate-200 dark:text-slate-700 border-slate-50 dark:border-slate-700 group-hover/row:border-orange-100 group-hover/row:text-orange-200'}`}
                       >
-                        {isSelected ? (
-                          <CheckSquare size={18} className="text-indigo-600 dark:text-indigo-400" />
-                        ) : (
-                          <Square size={18} className="text-slate-300 dark:text-slate-600 hover:text-slate-400" />
-                        )}
+                        {isSelected ? <CheckSquare size={20} strokeWidth={2.5} /> : <Square size={20} strokeWidth={2} />}
                       </button>
                     </td>
-                    <td className="pr-2 sm:pr-3 py-4 sm:py-5">
+                    <td className="px-4 py-5">
                       <div className="flex flex-col">
-                        <span className="font-black text-indigo-600 dark:text-indigo-400 text-sm sm:text-[13px] tracking-tight">{record.acto}</span>
-                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter truncate max-w-[100px]">{record.materia}</span>
+                        <span className={`font-black text-sm tracking-tight transition-colors ${isPA ? 'text-[#2F4DAA] dark:text-blue-400' : 'text-[#F59121] dark:text-orange-400'}`}>{record.acto}</span>
+                        <span className="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest truncate max-w-[120px] mt-1">{record.materia || 'S/M'}</span>
                       </div>
                     </td>
-                    <td className="px-2 sm:px-3 py-4 sm:py-5">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 dark:bg-slate-700 items-center justify-center text-slate-300 dark:text-slate-500 group-hover/row:bg-white dark:group-hover/row:bg-slate-600 group-hover/row:shadow-sm transition-all">
-                          <UserCircle size={20} className="sm:hidden" />
-                          <UserCircle size={22} className="hidden sm:block" />
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover/row:bg-gradient-to-br from-[#2F4DAA] to-[#1A2B56] group-hover/row:text-white group-hover/row:shadow-xl group-hover/row:shadow-blue-500/20 transition-all duration-500">
+                          <UserCircle size={26} strokeWidth={1.5} />
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <p className="text-[11px] sm:text-xs font-black text-slate-800 dark:text-white uppercase tracking-tight truncate max-w-[120px] sm:max-w-[150px] lg:max-w-xs">
+                          <p className="text-[14px] font-black text-slate-800 dark:text-white uppercase tracking-tight truncate max-w-[180px] lg:max-w-xs transition-colors group-hover/row:text-[#2F4DAA] dark:group-hover/row:text-blue-400">
                             {record.funcionario}
                           </p>
-                          <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 font-mono tracking-tighter">
+                          <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 mt-0.5 tracking-[0.1em]">
                             {record.rut}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-2 sm:px-3 py-4 sm:py-5 hidden sm:table-cell">
-                      <span className={`px-2 sm:px-3 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest border shadow-sm ${record.solicitudType === 'PA'
-                        ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-100 dark:border-indigo-800'
-                        : 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-800'
-                        }`}>
-                        {record.solicitudType}
+                    <td className="px-6 py-5 hidden sm:table-cell">
+                      <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm transition-all duration-500 ${isPA
+                        ? 'bg-blue-50/50 dark:bg-blue-900/20 text-[#2F4DAA] border-blue-100 dark:border-blue-900/50'
+                        : 'bg-orange-50/50 dark:bg-orange-900/20 text-[#F59121] border-orange-100 dark:border-orange-900/50'}`}>
+                        {isPA ? 'PA - Permiso' : 'FL - Feriado'}
                       </span>
                     </td>
                     {(activeTab === 'FL' || activeTab === 'ALL') && (
-                      <td className="px-2 sm:px-3 py-4 sm:py-5 hidden md:table-cell">
+                      <td className="px-6 py-5 hidden md:table-cell">
                         {record.solicitudType === 'FL' ? (
-                          <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2 flex-wrap">
                             {record.periodo1 && (
-                              <span className="px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black tracking-wide bg-sky-50 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-800 whitespace-nowrap">
+                              <span className="px-3 py-1 rounded-lg text-[9px] font-black bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 border border-sky-100/50 dark:border-sky-800/50 uppercase">
                                 {record.periodo1}
                               </span>
                             )}
                             {record.periodo2 && (
-                              <span className="px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black tracking-wide bg-purple-50 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800 whitespace-nowrap">
+                              <span className="px-3 py-1 rounded-lg text-[9px] font-black bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-100/50 dark:border-purple-800/50 uppercase">
                                 {record.periodo2}
                               </span>
                             )}
-                            {!record.periodo1 && !record.periodo2 && (
-                              <span className="text-[10px] text-slate-400">-</span>
-                            )}
                           </div>
                         ) : (
-                          <span className="text-[10px] text-slate-400">-</span>
+                          <span className="w-6 h-1 bg-slate-100 dark:bg-slate-800 rounded-full block" />
                         )}
                       </td>
                     )}
-                    <td className="px-2 sm:px-3 py-4 sm:py-5">
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <span className="font-black text-slate-700 dark:text-slate-200 text-sm sm:text-[13px]">{record.cantidadDias}</span>
-                        <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter hidden lg:inline">DÍAS</span>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-black text-[16px] tracking-tight ${isPA ? 'text-slate-800 dark:text-slate-200' : 'text-orange-700 dark:text-orange-400'}`}>{record.cantidadDias}</span>
+                        <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Días</span>
                       </div>
                     </td>
-                    <td className="px-2 sm:px-3 py-4 sm:py-5 hidden sm:table-cell">
-                      <span className={`font-black text-sm sm:text-[13px] ${getSaldo(record) < 0
-                        ? 'text-red-500 dark:text-red-400'
-                        : 'text-emerald-600 dark:text-emerald-400'
-                        }`}>
-                        {getSaldo(record).toFixed(1)}
-                      </span>
+                    <td className="px-6 py-5 hidden sm:table-cell">
+                      <div className={`flex flex-col ${getSaldo(record) < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-[16px] tracking-tight">{getSaldo(record).toFixed(1)}</span>
+                          {getSaldo(record) < 1 && <AlertCircle size={12} className="opacity-60" />}
+                        </div>
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Saldo Final</span>
+                      </div>
                     </td>
-                    <td className="px-2 sm:px-3 py-4 sm:py-5 hidden sm:table-cell">
-                      <span className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight truncate whitespace-nowrap">
-                        {formatNumericDate(record.fechaInicio)}
-                      </span>
+                    <td className="px-6 py-5 hidden sm:table-cell">
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-bold text-slate-700 dark:text-slate-300">{formatNumericDate(record.fechaInicio)}</span>
+                        <span className="text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em] mt-1">Inicio Vigencia</span>
+                      </div>
                     </td>
                     {(activeTab === 'FL' || activeTab === 'ALL') && (
-                      <td className="px-2 sm:px-3 py-4 sm:py-5 hidden lg:table-cell">
-                        <span className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight truncate whitespace-nowrap">
-                          {record.fechaTermino ? formatNumericDate(record.fechaTermino) : '-'}
-                        </span>
+                      <td className="px-6 py-5 hidden lg:table-cell">
+                        <div className="flex flex-col">
+                          <span className="text-[13px] font-bold text-slate-700 dark:text-slate-300">
+                            {record.fechaTermino ? formatNumericDate(record.fechaTermino) : '-'}
+                          </span>
+                          {record.fechaTermino && <span className="text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em] mt-1">Término</span>}
+                        </div>
                       </td>
                     )}
-                    <td className="px-2 sm:px-3 py-4 sm:py-5 hidden lg:table-cell">
-                      <span className="text-[11px] sm:text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-tight truncate whitespace-nowrap">
-                        {record.fechaDecreto ? formatNumericDate(record.fechaDecreto) : '-'}
-                      </span>
+                    <td className="px-6 py-5 hidden lg:table-cell">
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-bold text-[#2F4DAA] dark:text-blue-400">
+                          {record.fechaDecreto ? formatNumericDate(record.fechaDecreto) : '-'}
+                        </span>
+                        <span className="text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em] mt-1">F. Emisión</span>
+                      </div>
                     </td>
-                    <td className="pl-2 sm:pl-3 pr-4 sm:pr-8 py-4 sm:py-5 text-right">
-                      <div className="flex justify-end">
+                    <td className="pr-10 py-5 text-right">
+                      <div className="flex justify-end opacity-40 group-hover/row:opacity-100 transition-all duration-300">
                         <ActionMenu
                           record={record}
                           onEdit={canEdit ? onEdit : undefined}
@@ -583,12 +615,26 @@ const PermitTable: React.FC<PermitTableProps> = ({
               })}
               {paginatedData.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-6 sm:px-10 py-16 sm:py-24 text-center">
-                    <div className="flex flex-col items-center gap-4 opacity-20">
-                      <LayoutGrid size={40} />
-                      <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em]">
-                        Sin registros que mostrar
-                      </p>
+                  <td colSpan={11} className="px-10 py-40 text-center bg-slate-50/10 dark:bg-slate-900/10">
+                    <div className="flex flex-col items-center gap-8">
+                      <div className="relative">
+                        <div className="absolute -inset-10 bg-gradient-to-r from-[#2F4DAA]/10 to-[#F59121]/10 rounded-full blur-3xl opacity-50" />
+                        <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-[32px] shadow-2xl flex items-center justify-center text-slate-100 dark:text-slate-700 ring-1 ring-slate-100 dark:ring-slate-700/50 relative">
+                          <Archive size={48} strokeWidth={1} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[15px] font-black text-slate-800 dark:text-white uppercase tracking-[0.4em]">
+                          Base de Datos Vacía
+                        </p>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">No se encontraron decretos para los criterios seleccionados</p>
+                      </div>
+                      <button
+                        onClick={() => { setSearch(''); setAdvFilters(emptyFilters); }}
+                        className="px-8 py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                      >
+                        Limpiar todos los filtros
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -597,27 +643,30 @@ const PermitTable: React.FC<PermitTableProps> = ({
           </table>
         </div>
 
-        {/* Paginación */}
+        {/* Paginación Premium */}
         {totalPages > 1 && (
-          <div className="px-4 sm:px-8 py-4 sm:py-6 border-t border-slate-100 dark:border-slate-700">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={CONFIG.ITEMS_PER_PAGE}
-              onPageChange={setCurrentPage}
-            />
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={CONFIG.ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         )}
       </div>
 
-      {/* Hint para móvil */}
-      <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider sm:tracking-widest text-center">
-        {totalItems > 0
-          ? `${totalItems} registro${totalItems !== 1 ? 's' : ''} encontrado${totalItems !== 1 ? 's' : ''}`
-          : 'Desliza para ver más detalles en dispositivos móviles'
-        }
-      </p>
+      {/* Footer Info */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+        <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">
+          GDP Cloud v4.2 — Institutional Portal
+        </p>
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800/40 rounded-full border border-slate-100 dark:border-slate-700">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">
+            {totalItems} Decreto{totalItems !== 1 ? 's' : ''} en sistema
+          </p>
+        </div>
+      </div>
 
       {/* Modal de Previsualización */}
       <DecreePreviewModal

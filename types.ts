@@ -119,13 +119,28 @@ export interface EmployeeExtended {
   /** Unique identifier (generated via Date.now()) */
   id: string;
   firstName: string;
-  lastName: string;
-  /** RUT del funcionario (opcional para compatibilidad) */
-  rut?: string;
+  lastNamePaternal: string;
+  lastNameMaternal: string;
+  /** RUT del funcionario (obligatorio para el sistema institucional) */
+  rut: string;
   /** Job title / role within the institution */
   position: string;
   /** Organizational unit / department */
   department: string;
+  /** Fecha de nacimiento */
+  birthDate: string;
+  /** Fecha de ingreso institucional */
+  hireDate: string;
+  /** Institutional email address */
+  email: string;
+  /** Email de contacto personal */
+  emailPersonal: string;
+  /** Nombre de la jefatura directa */
+  jefaturaNombre: string;
+  /** Correo de la jefatura directa */
+  jefaturaEmail: string;
+  /** Información de contacto en caso de emergencia */
+  emergencyContact: string;
   /** Total annual vacation (feriado legal) days allocated */
   totalVacationDays: number;
   /** Vacation days consumed this year */
@@ -138,8 +153,6 @@ export interface EmployeeExtended {
   totalSickLeaveDays: number;
   /** Sick leave days consumed this year */
   usedSickLeaveDays: number;
-  /** Institutional email address */
-  email: string;
   /** URL for the employee's avatar (ui-avatars.com) */
   avatarUrl: string;
 }

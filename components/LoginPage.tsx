@@ -69,59 +69,48 @@ const LoginPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
-            {/* Background decoration */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl" />
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
-            </div>
-
-            <div className="relative w-full max-w-md">
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-2xl mb-4">
-                        <span className="text-2xl font-black text-white">GDP</span>
+        <div className="min-h-screen bg-[#F4F6FB] flex items-center justify-center p-6 sm:p-12 font-['Source_Sans_Pro']">
+            <div className="w-full max-w-[480px]">
+                {/* Card Container */}
+                <div className="bg-white rounded-[32px] shadow-[0px_10px_40px_rgba(0,0,0,0.04)] p-8 sm:p-12 border border-slate-100">
+                    {/* Header/Logo */}
+                    <div className="text-center mb-10">
+                        <div className="inline-flex items-center justify-center w-20 h-20 bg-[#2F4DAA] rounded-[24px] shadow-xl shadow-blue-900/10 mb-6">
+                            <span className="text-3xl font-bold text-white tracking-tighter italic">GDP</span>
+                        </div>
+                        <h1 className="text-3xl font-bold text-[#1A2B56] tracking-tight mb-2">¡Bienvenido!</h1>
+                        <p className="text-slate-500 font-medium italic">Ingresa a tu portal GDP Cloud</p>
                     </div>
-                    <h1 className="text-2xl font-black text-white tracking-tight">GDP Cloud</h1>
-                    <p className="text-sm text-slate-400 mt-1">Sistema de Gestión de Decretos</p>
-                </div>
-
-                {/* Card */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-8">
-                    <h2 className="text-xl font-black text-white mb-6 text-center">
-                        {mode === 'login' && 'Iniciar Sesión'}
-                        {mode === 'forgot' && 'Recuperar Contraseña'}
-                    </h2>
 
                     {/* Alerts */}
                     {error && (
-                        <div className="mb-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-red-200">{error}</p>
+                        <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm text-rose-700 font-medium">{error}</p>
                         </div>
                     )}
 
                     {success && (
-                        <div className="mb-4 p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
-                            <p className="text-sm text-emerald-200">{success}</p>
+                        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                            <p className="text-sm text-emerald-700 font-medium">{success}</p>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Email */}
                         <div>
-                            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                                Correo Electrónico
+                            <label className="block text-sm font-bold text-[#1A2B56] mb-2 px-1">
+                                Correo electrónico
                             </label>
-                            <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <div className="relative group">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#2F4DAA] transition-colors" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="tu@email.com"
+                                    placeholder="nombre@empresa.com"
                                     required
-                                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-[18px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-[#2F4DAA] transition-all font-medium"
                                 />
                             </div>
                         </div>
@@ -129,24 +118,33 @@ const LoginPage: React.FC = () => {
                         {/* Password - Solo en modo login */}
                         {mode === 'login' && (
                             <div>
-                                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                                    Contraseña
-                                </label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <div className="flex justify-between items-center mb-2 px-1">
+                                    <label className="text-sm font-bold text-[#1A2B56]">
+                                        Contraseña
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setMode('forgot'); setError(null); setSuccess(null); }}
+                                        className="text-sm text-[#2F4DAA] hover:text-[#253D88] font-bold transition-colors"
+                                    >
+                                        ¿Olvidaste tu contraseña?
+                                    </button>
+                                </div>
+                                <div className="relative group">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#2F4DAA] transition-colors" />
                                     <input
                                         type={showPassword ? 'text' : 'password'}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
+                                        placeholder="••••••••••••"
                                         required
                                         minLength={6}
-                                        className="w-full pl-12 pr-12 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-100 rounded-[18px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-[#2F4DAA] transition-all font-medium"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -154,34 +152,17 @@ const LoginPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Forgot password link */}
-                        {mode === 'login' && (
-                            <div className="text-right">
-                                <button
-                                    type="button"
-                                    onClick={() => { setMode('forgot'); setError(null); setSuccess(null); }}
-                                    className="text-xs text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
-                                >
-                                    ¿Olvidaste tu contraseña?
-                                </button>
-                            </div>
-                        )}
-
                         {/* Submit button */}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-slate-600 disabled:to-slate-600 text-white font-black rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-[#2F4DAA] hover:bg-[#253D88] disabled:bg-slate-300 text-white font-bold rounded-[18px] shadow-lg shadow-blue-900/10 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 text-lg"
                         >
                             {loading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    Procesando...
-                                </>
+                                <Loader2 className="w-6 h-6 animate-spin" />
                             ) : (
                                 <>
-                                    {mode === 'login' && 'Iniciar Sesión'}
-                                    {mode === 'forgot' && 'Enviar Instrucciones'}
+                                    {mode === 'login' ? 'Iniciar Sesión' : 'Enviar instrucciones'}
                                     <ArrowRight className="w-5 h-5" />
                                 </>
                             )}
@@ -191,22 +172,20 @@ const LoginPage: React.FC = () => {
                     {/* Google Sign In - Solo en modo login */}
                     {mode === 'login' && (
                         <>
-                            <div className="relative my-6">
+                            <div className="relative my-8 text-center">
                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-white/10"></div>
+                                    <div className="w-full border-t border-slate-100"></div>
                                 </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-transparent px-2 text-slate-500 font-bold backdrop-blur-xl">O también</span>
-                                </div>
+                                <span className="relative bg-white px-4 text-slate-400 text-sm font-medium">o continúa con</span>
                             </div>
 
                             <button
                                 type="button"
                                 onClick={handleGoogleLogin}
                                 disabled={loading}
-                                className="w-full py-3.5 bg-white hover:bg-slate-50 disabled:bg-slate-400 text-slate-900 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-3"
+                                className="w-full py-4 bg-white hover:bg-slate-50 disabled:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-[18px] shadow-sm transition-all transform active:scale-[0.98] flex items-center justify-center gap-3"
                             >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                <svg className="w-6 h-6" viewBox="0 0 24 24">
                                     <path
                                         fill="#4285F4"
                                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -224,37 +203,41 @@ const LoginPage: React.FC = () => {
                                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                                     />
                                 </svg>
-                                Continuar con Google
+                                Google
                             </button>
                         </>
                     )}
 
                     {/* Back to login (solo en modo forgot) */}
                     {mode === 'forgot' && (
-                        <div className="mt-6 pt-6 border-t border-white/10 text-center">
+                        <div className="mt-8 text-center px-1">
                             <button
                                 onClick={() => { setMode('login'); setError(null); setSuccess(null); }}
-                                className="text-sm text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+                                className="text-sm text-[#2F4DAA] hover:text-[#253D88] font-bold flex items-center justify-center gap-2 mx-auto"
                             >
                                 ← Volver al inicio de sesión
                             </button>
                         </div>
                     )}
-
-                    {/* Info para usuarios sin cuenta */}
-                    {mode === 'login' && (
-                        <div className="mt-6 pt-6 border-t border-white/10">
-                            <p className="text-xs text-slate-500 text-center">
-                                Las cuentas son creadas por el administrador del sistema.
-                                Si necesitas acceso, contacta al administrador.
-                            </p>
-                        </div>
-                    )}
                 </div>
 
-                {/* Footer */}
-                <p className="text-center text-xs text-slate-500 mt-6">
+                {/* Footer Labels */}
+                <div className="mt-10 space-y-4 px-4">
+                    <div className="flex items-center justify-center gap-6">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Seguro</span>
+                        <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Confidencial</span>
+                        <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Eficiente</span>
+                    </div>
+                </div>
+
+                {/* Footer Copyright */}
+                <p className="text-center text-xs text-slate-400 mt-12 font-medium">
                     © {new Date().getFullYear()} GDP Cloud · Todos los derechos reservados
+                </p>
+                <p className="text-center text-[10px] text-slate-300 mt-2 font-medium">
+                    Impulsado por Buk Aesthetic Design System
                 </p>
             </div>
         </div>

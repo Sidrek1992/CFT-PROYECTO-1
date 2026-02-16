@@ -18,7 +18,7 @@ export const populateTemplate = (
 ): string => {
     let line = template || '- {NOMBRE}: {JORNADA} desde {DESDE} hasta {HASTA}.';
 
-    line = line.replace(/{NOMBRE}/g, `${emp.firstName} ${emp.lastName}`);
+    line = line.replace(/{NOMBRE}/g, `${emp.firstName} ${emp.lastNamePaternal} ${emp.lastNameMaternal}`.trim());
     line = line.replace(/{CARGO}/g, emp.position);
     line = line.replace(/{TIPO}/g, request.type);
     line = line.replace(/{JORNADA}/g, getShiftText(request.shift || WorkShift.JC));
