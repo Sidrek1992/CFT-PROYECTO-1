@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, FileText, Settings, Sparkles, Mail, CalendarDays, LogOut, Cloud, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, Mail, CalendarDays, LogOut, Cloud, BookOpen } from 'lucide-react';
 import { ViewType } from '../types';
 
 interface SidebarProps {
@@ -17,7 +17,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout
     { id: 'employees', label: 'Funcionarios', icon: Users },
     { id: 'requests', label: 'Solicitudes', icon: FileText },
     { id: 'reports', label: 'Reportes', icon: Mail },
-    { id: 'ai-assistant', label: 'Asistente IA', icon: Sparkles, special: true },
   ];
 
   return (
@@ -42,10 +41,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout
               key={item.id}
               onClick={() => setView(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                  ? item.special
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/50'
-                    : 'bg-slate-800 text-white shadow-md'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                ? item.special
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/50'
+                  : 'bg-slate-800 text-white shadow-md'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               aria-current={isActive ? 'page' : undefined}
               aria-label={`Ir a ${item.label}`}
@@ -60,8 +59,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout
         <button
           onClick={() => setView('settings')}
           className={`flex items-center gap-3 px-4 py-3 w-full transition-colors rounded-lg ${currentView === 'settings'
-              ? 'bg-slate-800 text-white shadow-md'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            ? 'bg-slate-800 text-white shadow-md'
+            : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
           aria-current={currentView === 'settings' ? 'page' : undefined}
           aria-label="Ir a Configuración"

@@ -15,7 +15,7 @@ export interface Employee {
 export interface PermitRecord {
   id: string;
   solicitudType: SolicitudType;
-  decreto: string; 
+  decreto: string;
   materia: string;
   acto: string;
   funcionario: string;
@@ -194,12 +194,11 @@ export interface Notification {
 
 // ------------ TIPOS DE NAVEGACION ------------
 
-export type ViewType = 
+export type ViewType =
   | 'decretos'      // Vista principal de decretos PA/FL
   | 'dashboard'     // Dashboard de estadisticas
   | 'calendar'      // Calendario de ausencias
   | 'employees'     // Lista de funcionarios
   | 'requests'      // Solicitudes de permisos
   | 'reports'       // Reportes
-  | 'ai-assistant'  // Asistente IA
   | 'settings';     // Configuracion

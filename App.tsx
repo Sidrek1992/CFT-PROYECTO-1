@@ -38,7 +38,6 @@ const ThemeSelector = lazy(() => import('./components/ThemeSelector'));
 // New integrated modules from CFT-Permiso
 const Settings = lazy(() => import('./components/Settings').then((m) => ({ default: m.Settings })));
 const Reports = lazy(() => import('./components/Reports').then((m) => ({ default: m.Reports })));
-const AIAssistant = lazy(() => import('./components/AIAssistant').then((m) => ({ default: m.AIAssistant })));
 const LeaveRequests = lazy(() => import('./components/LeaveRequests').then((m) => ({ default: m.LeaveRequests })));
 const EmployeeList = lazy(() => import('./components/EmployeeList').then((m) => ({ default: m.EmployeeList })));
 
@@ -854,17 +853,6 @@ const AppContent: React.FC = () => {
               employees={hrEmployees}
               requests={hrRequests}
               config={appConfig}
-            />
-          </Suspense>
-        );
-
-      case 'ai-assistant':
-        return (
-          <Suspense fallback={<ViewSkeleton view="ai-assistant" />}>
-            <AIAssistant
-              employees={hrEmployees}
-              requests={hrRequests}
-              sessionToken={sessionToken || ''}
             />
           </Suspense>
         );
