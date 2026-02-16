@@ -3,6 +3,8 @@ import {
     User as FirebaseUser,
     onAuthStateChanged,
     signInWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider,
     signOut as firebaseSignOut,
     sendPasswordResetEmail,
     createUserWithEmailAndPassword,
@@ -28,6 +30,7 @@ interface AuthContextType {
     permissions: Permissions;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<{ error: any | null }>;
+    signInWithGoogle: () => Promise<{ error: any | null }>;
     signUp: (email: string, password: string) => Promise<{ error: any | null }>;
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<{ error: any | null }>;
@@ -106,32 +109,61 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     useEffect(() => {
+        console.log('[Auth] Initializing Auth Provider...');
+
         // Escuchar cambios de autenticación con Firebase
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            if (currentUser?.email && getUserSecurityByEmail(currentUser.email).blocked) {
-                await firebaseSignOut(auth);
-                setSession(null);
-                setUser(null);
-                setProfile(null);
+            console.log('[Auth] Auth state changed. User:', currentUser?.email || 'null');
+
+            try {
+                if (currentUser?.email && getUserSecurityByEmail(currentUser.email).blocked) {
+                    console.warn('[Auth] User is blocked:', currentUser.email);
+                    await firebaseSignOut(auth);
+                    setSession(null);
+                    setUser(null);
+                    setProfile(null);
+                    setLoading(false);
+                    return;
+                }
+
+                setUser(currentUser);
+
+                if (currentUser) {
+                    try {
+                        console.log('[Auth] Getting ID token...');
+                        const token = await getIdToken(currentUser);
+                        setSession({ access_token: token });
+                        await loadProfile(currentUser.uid);
+                    } catch (tokenErr) {
+                        console.error('[Auth] Error getting token or profile:', tokenErr);
+                    }
+                } else {
+                    setSession(null);
+                    setProfile(null);
+                }
+            } catch (err) {
+                console.error('[Auth] Unexpected error in onAuthStateChanged:', err);
+            } finally {
                 setLoading(false);
-                return;
+                console.log('[Auth] Auth initialization finished. Loading set to false.');
             }
-
-            setUser(currentUser);
-
-            if (currentUser) {
-                const token = await getIdToken(currentUser);
-                setSession({ access_token: token });
-                await loadProfile(currentUser.uid);
-            } else {
-                setSession(null);
-                setProfile(null);
-            }
-
+        }, (error) => {
+            console.error('[Auth] onAuthStateChanged observer error:', error);
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        // Timeout de seguridad: si después de 10 segundos sigue cargando, forzar false
+        const safetyTimeout = setTimeout(() => {
+            if (loading) {
+                console.warn('[Auth] Auth initialization timeout. Forcing loading = false.');
+                setLoading(false);
+            }
+        }, 10000);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(safetyTimeout);
+        };
     }, []);
 
     const signIn = async (email: string, password: string) => {
@@ -242,6 +274,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await firebaseSignOut(auth);
     };
 
+    const signInWithGoogle = async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+            const email = user.email || '';
+
+            // Verificar si el usuario está bloqueado localmente (opcional si usas Firebase)
+            if (email && getUserSecurityByEmail(email).blocked) {
+                await firebaseSignOut(auth);
+                return {
+                    error: { message: 'Tu cuenta está bloqueada.' }
+                };
+            }
+
+            touchUserLastAccess(email);
+            appendAuditLog({
+                scope: 'auth',
+                action: 'login_success_google',
+                actor: email,
+                target: email,
+                details: 'Inicio de sesión con Google exitoso'
+            });
+
+            return { error: null };
+        } catch (error: any) {
+            console.error('[Auth] Error signing in with Google:', error);
+            return { error };
+        }
+    };
+
     const resetPassword = async (email: string) => {
         try {
             await sendPasswordResetEmail(auth, email);
@@ -260,6 +323,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         permissions,
         loading,
         signIn,
+        signInWithGoogle,
         signUp,
         signOut,
         resetPassword,
