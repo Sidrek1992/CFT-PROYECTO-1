@@ -17,16 +17,16 @@ export const CONFIG = {
     WEB_APP_URL_FL_2P: import.meta.env.VITE_GAS_WEB_APP_URL_FL_2P || 'https://script.google.com/macros/s/AKfycbwYzlkEQRVA7O6l0QhjgfQL51Uq_KFLImiiOUEeayge8c1J833AJwO07-nYoK_OviXEdg/exec',
 
     // ID de la hoja de cálculo de decretos (PA)
-    DECRETOS_SHEET_ID: import.meta.env.VITE_DECRETOS_SHEET_ID || '1BmMABAHk8ZgpUlXzsyI33qQGtsk5mrKnf5qzgQp4US0',
+    DECRETOS_SHEET_ID: import.meta.env.VITE_DECRETOS_SHEET_ID || '1hpLRBjdsCINKL-xFRhaeJQqyIyHnbMmLJfYc8V_SDoE',
 
     // ID de la hoja de cálculo de feriados 1 período (FL)
-    FERIADOS_SHEET_ID: import.meta.env.VITE_FERIADOS_SHEET_ID || '1dSZ7v5WwP1w1WpwfP3hdWiTCF3pf2niXLKDK7GWIz0I',
+    FERIADOS_SHEET_ID: import.meta.env.VITE_FERIADOS_SHEET_ID || '1hpLRBjdsCINKL-xFRhaeJQqyIyHnbMmLJfYc8V_SDoE',
 
     // ID de la hoja de cálculo de feriados 2 períodos (FL_2P)
-    FERIADOS_2P_SHEET_ID: import.meta.env.VITE_FERIADOS_2P_SHEET_ID || '1dSZ7v5WwP1w1WpwfP3hdWiTCF3pf2niXLKDK7GWIz0I',
+    FERIADOS_2P_SHEET_ID: import.meta.env.VITE_FERIADOS_2P_SHEET_ID || '1hpLRBjdsCINKL-xFRhaeJQqyIyHnbMmLJfYc8V_SDoE',
 
     // ID de la hoja de cálculo de funcionarios
-    EMPLOYEES_SHEET_ID: import.meta.env.VITE_EMPLOYEES_SHEET_ID || '14qgHA7YP4qoSbzD8rgMPW6OmqLIVFi8V-1VPxoUEDbI',
+    EMPLOYEES_SHEET_ID: import.meta.env.VITE_EMPLOYEES_SHEET_ID || '1hpLRBjdsCINKL-xFRhaeJQqyIyHnbMmLJfYc8V_SDoE',
 
     // ID de la carpeta de destino en Drive
     TARGET_FOLDER_ID: import.meta.env.VITE_TARGET_FOLDER_ID || '1sX722eJuMnnrhqPO-zJF9ccCqlktLDo8',
