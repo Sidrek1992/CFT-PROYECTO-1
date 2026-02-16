@@ -10,6 +10,7 @@ import { useDarkMode } from './hooks/useDarkMode';
 import { useModals } from './hooks/useModals';
 import { useCloudSync } from './hooks/useCloudSync';
 import { useEmployeeSync } from './hooks/useEmployeeSync';
+import { useLeaveRequestSync } from './hooks/useLeaveRequestSync';
 import { useKeyboardShortcuts, ShortcutsHelpModal } from './hooks/useKeyboardShortcuts';
 import { ToastContainer, useToast } from './components/Toast';
 import { Sidebar } from './components/Sidebar';
@@ -175,27 +176,8 @@ const AppContent: React.FC = () => {
   // UNIFIED STATE - Single source of truth for employees
   // Persisted in localStorage. Derived Employee[] for decreto system.
   // ============================================================
-  const [hrEmployees, setHrEmployees] = useState<EmployeeExtended[]>(() => {
-    try {
-      const saved = localStorage.getItem('gdp_unified_employees_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return deduplicateEmployees(parsed);
-      }
-    } catch { /* use defaults */ }
-    return recalculateEmployeeUsage(INITIAL_EMPLOYEES, INITIAL_REQUESTS, getOperationalYear());
-  });
-
-  const [hrRequests, setHrRequests] = useState<LeaveRequest[]>(() => {
-    try {
-      const saved = localStorage.getItem('gdp_unified_requests_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch { /* use defaults */ }
-    return INITIAL_REQUESTS;
-  });
+  // Firestore Hooks & Toast
+  const { toasts, toast, removeToast } = useToast();
 
   const [appConfig, setAppConfig] = useState<AppConfig>(() => {
     try {
@@ -207,91 +189,87 @@ const AppContent: React.FC = () => {
 
   const [sessionToken, setSessionToken] = useState<string | null>(null);
 
-  // Derived Employee[] (simplified format) for the decreto system
-  const employees: Employee[] = useMemo(() => {
-    return hrEmployees
-      .map(emp => ({
-        nombre: `${emp.firstName} ${emp.lastNamePaternal} ${emp.lastNameMaternal}`.trim().toUpperCase(),
-        rut: emp.rut || ''
-      }))
-      .filter(e => e.nombre)
-      .sort((a, b) => a.nombre.localeCompare(b.nombre));
-  }, [hrEmployees]);
-
-  // Google Sheets sync (import employees from cloud, merge into unified list)
   const {
-    employees: sheetEmployees,
+    hrEmployees,
+    setHrEmployees,
     isSyncing: isEmployeeSyncing,
-    fetchEmployeesFromCloud
+    fetchEmployeesFromCloud: importEmployeesFromSheets,
+    addEmployee,
+    updateEmployee: updateEmployeeFirestore,
+    deleteEmployee: deleteEmployeeFirestore,
+    employees // Simplified for decretos
   } = useEmployeeSync(
-    () => { },
-    (error) => console.warn('Error empleados:', error)
+    () => { /* Subscribers handle updates */ },
+    (error) => toast.error('Error de empleados', error)
   );
 
-  // Merge sheet employees into unified hrEmployees (with fuzzy dedup)
-  const hasMergedSheetRef = useRef(false);
-  useEffect(() => {
-    if (sheetEmployees.length === 0 || hasMergedSheetRef.current) return;
-    hasMergedSheetRef.current = true;
+  const {
+    hrRequests,
+    setHrRequests,
+    isSyncing: isRequestsSyncing,
+    addHrRequest,
+    updateHrRequest,
+    deleteHrRequest
+  } = useLeaveRequestSync(
+    () => { /* Real-time updates */ },
+    (error) => toast.error('Error de solicitudes', error)
+  );
 
-    setHrEmployees(current => {
-      let changed = false;
+  const {
+    records,
+    setRecords,
+    isSyncing: isDecretoSyncing,
+    syncError,
+    lastSync,
+    fetchFromSheets: importRecordsFromSheets,
+    addRecord,
+    updateRecord,
+    deleteRecord,
+    undo,
+    canUndo
+  } = useCloudSync(
+    () => toast.success('Sincronizado', 'Datos actualizados correctamente'),
+    (error) => toast.error('Error de decretos', error)
+  );
 
-      for (const sheetEmp of sheetEmployees) {
-        if (!sheetEmp.rut || !sheetEmp.nombre) continue;
-
-        // Check if already exists by RUT
-        const byRut = current.find(e => e.rut === sheetEmp.rut);
-        if (byRut) continue;
-
-        // Check if exists by fuzzy name match
-        const byName = current.find(e =>
-          isSamePerson(`${e.firstName} ${e.lastNamePaternal} ${e.lastNameMaternal}`.trim(), sheetEmp.nombre)
-        );
-
-        if (byName) {
-          // Attach RUT to existing employee
-          if (!byName.rut) {
-            byName.rut = sheetEmp.rut;
-            changed = true;
-          }
-          continue;
-        }
-
-        // Truly new employee from cloud
-        const parts = sheetEmp.nombre.split(' ');
-        const firstName = parts[0] || '';
-        const lastNamePaternal = parts[1] || '';
-        const lastNameMaternal = parts.slice(2).join(' ') || '';
-        current = [...current, {
-          id: crypto.randomUUID(),
-          firstName,
-          lastNamePaternal,
-          lastNameMaternal,
-          rut: sheetEmp.rut,
-          email: `${firstName.toLowerCase()}.${lastNamePaternal.toLowerCase().replace(/ /g, '')}@institucion.cl`,
-          emailPersonal: '',
-          birthDate: '1990-01-01',
-          hireDate: '2024-01-01',
-          jefaturaNombre: '',
-          jefaturaEmail: '',
-          emergencyContact: '',
-          position: 'Funcionario',
-          department: 'General',
-          totalVacationDays: appConfig.defaultVacationDays,
-          usedVacationDays: 0,
-          totalAdminDays: appConfig.defaultAdminDays,
-          usedAdminDays: 0,
-          totalSickLeaveDays: appConfig.defaultSickLeaveDays,
-          usedSickLeaveDays: 0,
-          avatarUrl: `https://ui-avatars.com/api/?name=${firstName}+${lastNamePaternal}&background=random&color=fff`
-        }];
-        changed = true;
+  // MIGRACION: Manual trigger handlers
+  const handleMigrateEmployees = useCallback(async () => {
+    if (!window.confirm('¿Deseas intentar migrar funcionarios desde Google Sheets a Firestore?')) return;
+    const imported = await importEmployeesFromSheets();
+    if (imported) {
+      toast.info('Migrando...', 'Subiendo funcionarios a Firestore');
+      for (const emp of imported) {
+        await addEmployee(emp);
       }
+      toast.success('Exito', 'Funcionarios migrados a Firestore');
+    }
+  }, [importEmployeesFromSheets, addEmployee, toast]);
 
-      return changed ? deduplicateEmployees([...current]) : current;
-    });
-  }, [sheetEmployees, appConfig]);
+  const handleMigrateRecords = useCallback(async () => {
+    if (!window.confirm('¿Deseas intentar migrar decretos desde Google Sheets a Firestore?')) return;
+    const imported = await importRecordsFromSheets();
+    if (imported) {
+      toast.info('Migrando...', 'Subiendo decretos a Firestore');
+      for (const rec of imported) {
+        await addRecord(rec);
+      }
+      toast.success('Exito', 'Decretos migrados a Firestore');
+    }
+  }, [importRecordsFromSheets, addRecord, toast]);
+
+  // MIGRACION: Si Firestore está vacío, ofrecer importar
+  const handleInitialMigration = useCallback(async () => {
+    if (hrEmployees.length === 0 && window.confirm('¿Deseas intentar migrar datos iniciales desde Google Sheets?')) {
+      await handleMigrateEmployees();
+    }
+  }, [hrEmployees.length, handleMigrateEmployees]);
+
+  // Handle migration check on mount
+  useEffect(() => {
+    if (hrEmployees.length === 0) {
+      handleInitialMigration();
+    }
+  }, [hrEmployees.length, handleInitialMigration]);
 
   const [editingRecord, setEditingRecord] = useState<PermitRecord | null>(null);
   const [activeTab, setActiveTab] = useState<SolicitudType | 'ALL'>('ALL');
@@ -308,40 +286,8 @@ const AppContent: React.FC = () => {
   const formRef = useRef<HTMLElement>(null);
 
   const { isDark, toggle: toggleDarkMode } = useDarkMode();
-  const { toasts, toast, removeToast } = useToast();
 
-  const {
-    records,
-    setRecords,
-    isSyncing,
-    syncError,
-    lastSync,
-    isOnline,
-    syncWarnings,
-    pendingSync,
-    isRetryScheduled,
-    moduleSync,
-    fetchFromCloud,
-    fetchModuleFromCloud,
-    syncToCloud,
-    undo,
-    canUndo
-  } = useCloudSync(
-    () => toast.success('Sincronizado', 'Datos actualizados correctamente'),
-    (error) => toast.error('Error de sincronizacion', error)
-  );
 
-  const lastWarningsRef = useRef('');
-
-  useEffect(() => {
-    if (syncWarnings.length === 0) return;
-    const key = syncWarnings.join('|');
-    if (key === lastWarningsRef.current) return;
-    lastWarningsRef.current = key;
-    const preview = syncWarnings.slice(0, 3).join(' . ');
-    const extra = syncWarnings.length > 3 ? ` (+${syncWarnings.length - 3} mas)` : '';
-    toast.warning('Datos con formato inesperado', `${preview}${extra}`);
-  }, [syncWarnings, toast]);
 
   // Load session token from sessionStorage
   useEffect(() => {
@@ -391,35 +337,27 @@ const AppContent: React.FC = () => {
   }, [records, employees]);
 
   // Decretos handlers
-  const handleSubmit = (formData: PermitFormData) => {
+  const handleSubmit = async (formData: PermitFormData) => {
     const actor = user?.email || 'sistema';
-    let updated: PermitRecord[];
-    if (editingRecord) {
-      updated = records.map(r =>
-        r.id === editingRecord.id ? { ...formData, id: r.id, createdAt: r.createdAt } : r
-      );
-      setEditingRecord(null);
-      toast.success('Decreto actualizado', `${formData.acto} modificado correctamente`);
+    try {
+      if (editingRecord) {
+        await updateRecord(editingRecord.id, formData);
+        setEditingRecord(null);
+        toast.success('Decreto actualizado', `${formData.acto} modificado correctamente`);
+      } else {
+        await addRecord(formData);
+        toast.success('Decreto emitido', `Resolucion ${formData.acto} creada exitosamente`);
+      }
       appendAuditLog({
         scope: 'decree',
-        action: 'update_decree',
+        action: editingRecord ? 'update_decree' : 'create_decree',
         actor,
         target: `${formData.solicitudType} ${formData.acto}`,
         details: `Funcionario: ${formData.funcionario}`
       });
-    } else {
-      updated = [...records, { ...formData, id: crypto.randomUUID(), createdAt: Date.now() }];
-      toast.success('Decreto emitido', `Resolucion ${formData.acto} creada exitosamente`);
-      appendAuditLog({
-        scope: 'decree',
-        action: 'create_decree',
-        actor,
-        target: `${formData.solicitudType} ${formData.acto}`,
-        details: `Funcionario: ${formData.funcionario}`
-      });
+    } catch (e) {
+      toast.error('Error', 'No se pudo sincronizar decreto');
     }
-    setRecords(updated);
-    syncToCloud(updated);
   };
 
   const handleDelete = (id: string) => {
@@ -427,13 +365,11 @@ const AppContent: React.FC = () => {
     openModal('confirmDelete');
   };
 
-  const confirmDelete = useCallback(() => {
+  const confirmDelete = useCallback(async () => {
     if (deleteTargetId) {
       const deleted = records.find(r => r.id === deleteTargetId);
-      const updated = records.filter(r => r.id !== deleteTargetId);
-      setRecords(updated);
-      syncToCloud(updated);
-      toast.warning('Decreto eliminado', 'Puedes deshacer esta accion');
+      await deleteRecord(deleteTargetId);
+      toast.warning('Decreto eliminado', 'Registro removido de Firestore');
       appendAuditLog({
         scope: 'decree',
         action: 'delete_decree',
@@ -443,7 +379,7 @@ const AppContent: React.FC = () => {
       });
       setDeleteTargetId(null);
     }
-  }, [deleteTargetId, records, setRecords, syncToCloud, toast, user?.email]);
+  }, [deleteTargetId, records, deleteRecord, toast, user?.email]);
 
   const handleUndo = () => {
     undo();
@@ -681,7 +617,7 @@ const AppContent: React.FC = () => {
   // Keyboard shortcuts
   const shortcuts = useMemo(() => [
     { key: 'n', ctrlKey: true, action: () => { setCurrentView('decretos'); formRef.current?.scrollIntoView({ behavior: 'smooth' }); }, description: 'Nuevo decreto' },
-    { key: 's', ctrlKey: true, action: () => fetchFromCloud(), description: 'Sincronizar' },
+    { key: 's', ctrlKey: true, action: () => importRecordsFromSheets(), description: 'Sincronizar' },
     { key: 'e', ctrlKey: true, action: handleExportData, description: 'Exportar Excel' },
     { key: 'd', ctrlKey: true, action: toggleDarkMode, description: 'Cambiar tema' },
     { key: 'b', ctrlKey: true, action: () => openModal('decreeBook'), description: 'Libro de decretos' },
@@ -690,29 +626,19 @@ const AppContent: React.FC = () => {
     { key: 'z', ctrlKey: true, action: handleUndo, description: 'Deshacer' },
     { key: 'k', ctrlKey: true, action: () => setCommandPaletteOpen(true), description: 'Buscar comandos' },
     { key: '?', action: () => openModal('shortcuts'), description: 'Mostrar atajos' },
-  ], [fetchFromCloud, handleExportData, toggleDarkMode, openModal, handleUndo]);
+  ], [importRecordsFromSheets, handleExportData, toggleDarkMode, openModal, handleUndo]);
 
   useKeyboardShortcuts(shortcuts);
 
-  const syncStatusLabel = isSyncing
-    ? 'Sincronizando...'
-    : !isOnline
-      ? pendingSync ? 'Pendiente (offline)' : 'Offline'
-      : syncError
-        ? 'Error de sincronizacion'
-        : pendingSync
-          ? isRetryScheduled ? 'Reintentando...' : 'Pendiente'
-          : 'Sincronizado';
+  const isAnySyncing = isEmployeeSyncing || isRequestsSyncing || isDecretoSyncing;
 
-  const syncStatusDotClass = isSyncing
+  const syncStatusLabel = isAnySyncing
+    ? 'Sincronizando...'
+    : 'Online - Firestore';
+
+  const syncStatusDotClass = isAnySyncing
     ? 'bg-indigo-500 animate-ping'
-    : pendingSync
-      ? 'bg-amber-500'
-      : syncError
-        ? 'bg-red-500'
-        : isOnline
-          ? 'bg-emerald-500'
-          : 'bg-red-500';
+    : 'bg-emerald-500';
 
   const welcomeUserName = useMemo(() => {
     if (user?.displayName) return user.displayName;
@@ -789,7 +715,7 @@ const AppContent: React.FC = () => {
                       <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                         Historial Institucional
                       </span>
-                      {lastSync && !isSyncing && (
+                      {lastSync && !isAnySyncing && (
                         <span className="hidden sm:flex items-center gap-1 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 rounded-full text-[8px] font-black uppercase tracking-tighter">
                           <CheckCircle className="w-2.5 h-2.5" /> Sincronizado
                         </span>
@@ -901,6 +827,8 @@ const AppContent: React.FC = () => {
               requests={hrRequests}
               onSave={handleSaveConfig}
               onImport={handleImportData}
+              onMigrateEmployees={handleMigrateEmployees}
+              onMigrateRecords={handleMigrateRecords}
             />
             {role === 'admin' && (
               <div className="max-w-5xl mx-auto mt-8 mb-8">
@@ -945,7 +873,7 @@ const AppContent: React.FC = () => {
             setMobileMenuOpen(false);
           }}
           onLogout={handleLogout}
-          isSyncing={isSyncing}
+          isSyncing={isAnySyncing}
         />
       </div>
 
@@ -984,9 +912,9 @@ const AppContent: React.FC = () => {
               <div className="hidden md:flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 gap-1">
                 {/* Sync */}
                 <button
-                  onClick={() => fetchFromCloud()}
-                  disabled={isSyncing}
-                  className={`p-2 rounded-xl transition-all active:scale-90 ${isSyncing
+                  onClick={() => importRecordsFromSheets()}
+                  disabled={isAnySyncing}
+                  className={`p-2 rounded-xl transition-all active:scale-90 ${isAnySyncing
                     ? 'text-slate-300 dark:text-slate-600'
                     : syncError
                       ? 'text-red-500 hover:bg-red-100/50'
@@ -994,7 +922,7 @@ const AppContent: React.FC = () => {
                     }`}
                   title="Sincronizar datos"
                 >
-                  <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 ${isAnySyncing ? 'animate-spin' : ''}`} />
                 </button>
 
                 {/* Search / Palette Trigger (Visual only for now) */}
@@ -1067,7 +995,7 @@ const AppContent: React.FC = () => {
           </div>
 
           {/* Dynamic Progress/Status Line */}
-          {isSyncing && (
+          {isAnySyncing && (
             <div className="absolute bottom-0 left-0 w-full h-[2px] bg-indigo-50 dark:bg-indigo-900/30 overflow-hidden">
               <div className="h-full bg-gradient-to-r from-transparent via-indigo-600 to-transparent bg-[length:200%_100%] animate-sync-progress" />
             </div>

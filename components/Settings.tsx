@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Save, AlertTriangle, CheckCircle, Mail, FileText, Download, Upload, Database, FileSpreadsheet, FileJson } from 'lucide-react';
+import { Save, AlertTriangle, CheckCircle, Mail, FileText, Download, Upload, Database, FileSpreadsheet, FileJson, Cloud, Users } from 'lucide-react';
 import { AppConfig, EmployeeExtended as Employee, LeaveRequest } from '../types';
 import { validateConfig, validateImportData } from '../utils/validators';
 
@@ -11,11 +11,21 @@ interface SettingsProps {
   requests?: LeaveRequest[];
   onSave: (newConfig: AppConfig, applyToAll: boolean) => void;
   onImport?: (data: { employees: Employee[], requests: LeaveRequest[], config: AppConfig }) => void;
+  onMigrateEmployees?: () => Promise<void>;
+  onMigrateRecords?: () => Promise<void>;
 }
 
 type TemplateTab = 'general' | 'legal' | 'admin' | 'sick';
 
-export const Settings: React.FC<SettingsProps> = ({ config, employees = [], requests = [], onSave, onImport }) => {
+export const Settings: React.FC<SettingsProps> = ({
+  config,
+  employees = [],
+  requests = [],
+  onSave,
+  onImport,
+  onMigrateEmployees,
+  onMigrateRecords
+}) => {
   const [vacationDays, setVacationDays] = useState(config.defaultVacationDays);
   const [adminDays, setAdminDays] = useState(config.defaultAdminDays);
   const [sickLeaveDays, setSickLeaveDays] = useState(config.defaultSickLeaveDays);
@@ -587,103 +597,37 @@ export const Settings: React.FC<SettingsProps> = ({ config, employees = [], requ
         </form>
       </div>
 
-      {/* Data Management Section */}
+      {/* Cloud Migration Section */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-            <Database size={18} className="text-indigo-600" />
-            Gestión de Datos
+        <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
+          <h3 className="font-semibold text-indigo-900 flex items-center gap-2">
+            <Cloud size={18} className="text-indigo-600" />
+            Migración a la Nube (Firestore)
           </h3>
         </div>
-        <div className="p-6 space-y-8">
+        <div className="p-6 space-y-4">
           <p className="text-sm text-slate-600">
-            Seleccione el método de respaldo o importación que prefiera.
-            <br />
-            <span className="text-slate-500 text-xs">Recomendación: Use <strong>JSON</strong> para respaldos completos del sistema y <strong>Excel</strong> para editar datos masivamente o generar reportes.</span>
+            Utilice estas herramientas para migrar sus datos heredados desde Google Sheets directamente a la base de datos Firestore.
           </p>
-
-          {/* JSON Section */}
-          <div>
-            <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-              <FileJson size={16} className="text-slate-400" />
-              Respaldo Nativo (JSON)
-            </h4>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={handleExportJSON}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-medium transition-colors"
-              >
-                <Download size={18} />
-                Descargar Backup JSON
-              </button>
-              <div className="flex-1">
-                <input
-                  type="file"
-                  ref={jsonInputRef}
-                  onChange={handleFileChangeJSON}
-                  accept=".json"
-                  className="hidden"
-                />
-                <button
-                  onClick={handleImportJSONClick}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-medium transition-colors"
-                >
-                  <Upload size={18} />
-                  Restaurar Backup JSON
-                </button>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              onClick={onMigrateEmployees}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium transition-colors shadow-sm"
+            >
+              <Users size={18} />
+              Migrar Funcionarios (Sheets → Cloud)
+            </button>
+            <button
+              onClick={onMigrateRecords}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors shadow-sm"
+            >
+              <FileSpreadsheet size={18} />
+              Migrar Decretos (Sheets → Cloud)
+            </button>
           </div>
-
-          <div className="border-t border-slate-100"></div>
-
-          {/* Excel Section */}
-          <div>
-            <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-              <FileSpreadsheet size={16} className="text-emerald-600" />
-              Interoperabilidad (Excel)
-            </h4>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={handleExportExcel}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 rounded-lg font-medium transition-colors group"
-              >
-                <Download size={18} className="group-hover:text-emerald-600" />
-                Exportar a Excel
-              </button>
-              <div className="flex-1">
-                <input
-                  type="file"
-                  ref={excelInputRef}
-                  onChange={handleFileChangeExcel}
-                  accept=".xlsx, .xls"
-                  className="hidden"
-                />
-                <button
-                  onClick={handleImportExcelClick}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 rounded-lg font-medium transition-colors group"
-                >
-                  <Upload size={18} className="group-hover:text-indigo-600" />
-                  Importar desde Excel
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 text-center h-6">
-            {importStatus === 'success' && (
-              <span className="text-sm font-medium text-emerald-600 flex items-center justify-center gap-2 animate-fade-in">
-                <CheckCircle size={16} />
-                {importMessage}
-              </span>
-            )}
-            {importStatus === 'error' && (
-              <span className="text-sm font-medium text-rose-600 flex items-center justify-center gap-2 animate-fade-in">
-                <AlertTriangle size={16} />
-                {importMessage}
-              </span>
-            )}
-          </div>
+          <p className="text-[10px] text-slate-400 italic">
+            * Nota: Este proceso puede tomar unos segundos. Se recomienda realizarlo una sola vez para poblar la base de datos inicial.
+          </p>
         </div>
       </div>
     </div>
