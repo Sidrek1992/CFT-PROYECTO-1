@@ -12,9 +12,9 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isSyncing }) => {
   const menuItems: { id: ViewType; label: string; icon: React.ComponentType<{ size?: number; className?: string }>; special?: boolean }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'employees', label: 'Funcionarios', icon: Users },
     { id: 'decretos', label: 'Decretos', icon: BookOpen },
     { id: 'calendar', label: 'Calendario', icon: CalendarDays },
-    { id: 'employees', label: 'Funcionarios', icon: Users },
     { id: 'requests', label: 'Solicitudes', icon: FileText },
     { id: 'reports', label: 'Reportes', icon: Mail },
   ];
