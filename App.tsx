@@ -193,13 +193,13 @@ const AppContent: React.FC = () => {
     hrEmployees,
     setHrEmployees,
     isSyncing: isEmployeeSyncing,
-    fetchEmployeesFromCloud: importEmployeesFromSheets,
+    fullSyncFromSheets: importEmployeesFromSheets,
     addEmployee,
     updateEmployee: updateEmployeeFirestore,
     deleteEmployee: deleteEmployeeFirestore,
     employees // Simplified for decretos
   } = useEmployeeSync(
-    () => { /* Subscribers handle updates */ },
+    () => { /* Real-time updates */ },
     (error) => toast.error('Error de empleados', error)
   );
 
@@ -221,15 +221,15 @@ const AppContent: React.FC = () => {
     isSyncing: isDecretoSyncing,
     syncError,
     lastSync,
-    fetchFromSheets: importRecordsFromSheets,
+    fullSyncFromSheets: importRecordsFromSheets,
     addRecord,
     updateRecord,
     deleteRecord,
     undo,
     canUndo
   } = useCloudSync(
-    () => toast.success('Sincronizado', 'Datos actualizados correctamente'),
-    (error) => toast.error('Error de decretos', error)
+    () => toast.success('Sincronizado', 'Conectado a la base de datos'),
+    (error) => toast.error('Error de base de datos', error)
   );
 
 
@@ -275,15 +275,10 @@ const AppContent: React.FC = () => {
     try { localStorage.setItem('gdp_unified_config_v2', JSON.stringify(appConfig)); } catch { /* ignore */ }
   }, [appConfig]);
 
-  // Sync hrEmployees with Decretos and Requests (Debounced to prevent freezing during mass updates)
-  useEffect(() => {
-    if (hrEmployees.length > 0 && (records.length > 0 || hrRequests.length > 0)) {
-      const timer = setTimeout(() => {
-        setHrEmployees(prev => recalculateEmployeeUsage(prev, hrRequests, records, getOperationalYear()));
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [records, hrRequests, setHrEmployees]);
+  // Synchronous derivation of employees with their calculated usage (Prevents loops and ensures real-time sync)
+  const employeesWithUsage = useMemo(() => {
+    return recalculateEmployeeUsage(hrEmployees, hrRequests, records, getOperationalYear());
+  }, [hrEmployees, hrRequests, records]);
 
   // Independent correlatives for PA and FL
   const nextCorrelatives = useMemo(() => {
@@ -539,26 +534,14 @@ const AppContent: React.FC = () => {
 
   const handleDeleteHrEmployee = (id: string) => {
     if (window.confirm('Estas seguro de que deseas eliminar este funcionario?')) {
-      setHrRequests(curr => {
-        const nextRequests = curr.filter(req => req.employeeId !== id);
-        setHrEmployees(currEmps => recalculateEmployeeUsage(
-          currEmps.filter(emp => emp.id !== id),
-          nextRequests,
-          records,
-          getOperationalYear()
-        ));
-        return nextRequests;
-      });
+      setHrEmployees(curr => curr.filter(emp => emp.id !== id));
+      setHrRequests(curr => curr.filter(req => req.employeeId !== id));
       addNotification('Funcionario eliminado', 'info');
     }
   };
 
   const updateRequestStatus = (id: string, status: LeaveStatus) => {
-    setHrRequests(curr => {
-      const next = curr.map(req => req.id === id ? { ...req, status } : req);
-      setHrEmployees(currEmps => recalculateEmployeeUsage(currEmps, next, records, getOperationalYear()));
-      return next;
-    });
+    setHrRequests(curr => curr.map(req => req.id === id ? { ...req, status } : req));
     addNotification(`Solicitud ${status === LeaveStatus.APPROVED ? 'aprobada' : 'rechazada'}`, status === LeaveStatus.APPROVED ? 'success' : 'info');
   };
 
@@ -568,11 +551,7 @@ const AppContent: React.FC = () => {
       id: crypto.randomUUID(),
       status: LeaveStatus.PENDING
     };
-    setHrRequests(curr => {
-      const next = [newRequest, ...curr];
-      setHrEmployees(currEmps => recalculateEmployeeUsage(currEmps, next, records, getOperationalYear()));
-      return next;
-    });
+    setHrRequests(curr => [newRequest, ...curr]);
     addNotification('Solicitud creada correctamente', 'success');
   };
 
@@ -594,9 +573,9 @@ const AppContent: React.FC = () => {
   };
 
   const handleImportData = (data: { employees: EmployeeExtended[], requests: LeaveRequest[], config: AppConfig }) => {
+    setHrEmployees(data.employees || hrEmployees);
     setHrRequests(data.requests || hrRequests);
     setAppConfig(data.config || appConfig);
-    setHrEmployees(recalculateEmployeeUsage(data.employees || hrEmployees, data.requests || hrRequests, records, getOperationalYear()));
     addNotification('Datos importados correctamente', 'success');
   };
 
@@ -652,7 +631,7 @@ const AppContent: React.FC = () => {
                 <Dashboard
                   records={records}
                   employees={employees}
-                  hrEmployees={hrEmployees}
+                  hrEmployees={employeesWithUsage}
                   hrRequests={hrRequests}
                   onViewLowBalance={() => openModal('lowBalance')}
                   onNavigate={(view) => setCurrentView(view as ViewType)}
@@ -669,7 +648,7 @@ const AppContent: React.FC = () => {
                   editingRecord={editingRecord}
                   onCancelEdit={() => setEditingRecord(null)}
                   nextCorrelatives={nextCorrelatives}
-                  employees={hrEmployees}
+                  employees={employeesWithUsage}
                   records={records}
                   requestedSolicitudType={requestedSolicitudType}
                   onRequestedSolicitudTypeHandled={() => setRequestedSolicitudType(null)}
@@ -753,7 +732,7 @@ const AppContent: React.FC = () => {
             <Dashboard
               records={records}
               employees={employees}
-              hrEmployees={hrEmployees}
+              hrEmployees={employeesWithUsage}
               hrRequests={hrRequests}
               onViewLowBalance={() => openModal('lowBalance')}
               onNavigate={(view) => setCurrentView(view as ViewType)}
@@ -777,7 +756,7 @@ const AppContent: React.FC = () => {
         return (
           <Suspense fallback={<ViewSkeleton view="employees" />}>
             <EmployeeList
-              employees={hrEmployees}
+              employees={employeesWithUsage}
               onAddEmployee={handleAddHrEmployee}
               onEditEmployee={handleEditHrEmployee}
               onDeleteEmployee={handleDeleteHrEmployee}
@@ -791,7 +770,7 @@ const AppContent: React.FC = () => {
           <Suspense fallback={<ViewSkeleton view="requests" />}>
             <LeaveRequests
               requests={hrRequests}
-              employees={hrEmployees}
+              employees={employeesWithUsage}
               updateRequestStatus={updateRequestStatus}
               addNewRequest={addNewRequest}
               onError={(msg) => addNotification(msg, 'error')}
@@ -803,7 +782,7 @@ const AppContent: React.FC = () => {
         return (
           <Suspense fallback={<ViewSkeleton view="reports" />}>
             <Reports
-              employees={hrEmployees}
+              employees={employeesWithUsage}
               requests={hrRequests}
               config={appConfig}
             />
@@ -815,7 +794,7 @@ const AppContent: React.FC = () => {
           <Suspense fallback={<ViewSkeleton view="settings" />}>
             <Settings
               config={appConfig}
-              employees={hrEmployees}
+              employees={employeesWithUsage}
               requests={hrRequests}
               onSave={handleSaveConfig}
               onImport={handleImportData}

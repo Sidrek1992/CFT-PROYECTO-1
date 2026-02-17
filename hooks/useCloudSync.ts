@@ -25,6 +25,7 @@ interface UseCloudSyncReturn {
   deleteRecord: (id: string) => Promise<void>;
   undo: () => void;
   canUndo: boolean;
+  fullSyncFromSheets: () => Promise<boolean>;
 }
 
 export const useCloudSync = (
@@ -119,9 +120,6 @@ export const useCloudSync = (
     if (undoStack.length === 0) return;
     const previousState = undoStack[undoStack.length - 1];
     setUndoStack(prev => prev.slice(0, -1));
-    // En Firestore, el undo es más complejo si queremos revertir múltiples cambios.
-    // Por ahora, simplemente actualizaremos localmente y el usuario decidirá si re-sincroniza.
-    // Pero con Firestore real-time, el estado remoto debería ser la fuente de verdad.
     syncLogger.warn('Deshacer en Firestore requiere revertir documentos específicos.');
   }, [undoStack]);
 
@@ -135,6 +133,15 @@ export const useCloudSync = (
     [pushToUndoStack]
   );
 
+  const fullSyncFromSheets = useCallback(async () => {
+    const data = await fetchFromSheets();
+    if (data && data.length > 0) {
+      await syncToFirestore(data);
+      return true;
+    }
+    return false;
+  }, [fetchFromSheets, syncToFirestore]);
+
   return {
     records,
     setRecords: setRecordsWithUndo,
@@ -147,7 +154,7 @@ export const useCloudSync = (
     updateRecord,
     deleteRecord,
     undo,
-    canUndo: undoStack.length > 0
+    canUndo: undoStack.length > 0,
+    fullSyncFromSheets
   };
 };
-

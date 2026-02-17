@@ -8,8 +8,8 @@ import { employeeService } from '../services/employeeService';
 const employeeLogger = logger.create('EmployeeSync');
 
 interface UseEmployeeSyncReturn {
-    employees: Employee[]; // Simplified for decretos
-    hrEmployees: EmployeeExtended[]; // Full data
+    employees: Employee[];
+    hrEmployees: EmployeeExtended[];
     setHrEmployees: React.Dispatch<React.SetStateAction<EmployeeExtended[]>>;
     isSyncing: boolean;
     syncError: boolean;
@@ -19,6 +19,7 @@ interface UseEmployeeSyncReturn {
     addEmployee: (employee: Partial<EmployeeExtended>) => Promise<void>;
     updateEmployee: (id: string, updatedEmployee: Partial<EmployeeExtended>) => Promise<void>;
     deleteEmployee: (id: string) => Promise<void>;
+    fullSyncFromSheets: () => Promise<boolean>;
 }
 
 export const useEmployeeSync = (
@@ -38,7 +39,6 @@ export const useEmployeeSync = (
         setIsSyncing(true);
         setSyncError(false);
 
-        // Timeout de 15 segundos para evitar que se quede colgado
         const timeoutId = setTimeout(() => {
             if (isSubscribed) {
                 console.warn('Timeout de sincronización alcanzado');
@@ -172,6 +172,15 @@ export const useEmployeeSync = (
         await employeeService.delete(id);
     }, []);
 
+    const fullSyncFromSheets = useCallback(async () => {
+        const data = await fetchEmployeesFromCloud();
+        if (data && data.length > 0) {
+            await syncEmployeesToFirestore(data);
+            return true;
+        }
+        return false;
+    }, [fetchEmployeesFromCloud, syncEmployeesToFirestore]);
+
     return {
         employees,
         hrEmployees,
@@ -183,7 +192,7 @@ export const useEmployeeSync = (
         syncEmployeesToFirestore,
         addEmployee,
         updateEmployee,
-        deleteEmployee
+        deleteEmployee,
+        fullSyncFromSheets
     };
 };
-
