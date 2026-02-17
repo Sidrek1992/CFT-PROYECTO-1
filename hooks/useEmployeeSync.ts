@@ -34,16 +34,57 @@ export const useEmployeeSync = (
 
     // 1. Suscribirse a Firestore en tiempo real
     useEffect(() => {
+        let isSubscribed = true;
         setIsSyncing(true);
-        const unsubscribe = employeeService.subscribeAll((data) => {
-            setHrEmployees(data.sort((a, b) => a.firstName.localeCompare(b.firstName)));
-            setIsSyncing(false);
-            setLastSync(new Date());
-            onSyncSuccess?.();
-        });
+        setSyncError(false);
+        
+        // Timeout de 15 segundos para evitar que se quede colgado
+        const timeoutId = setTimeout(() => {
+            if (isSubscribed) {
+                console.warn('Timeout de sincronización alcanzado');
+                setIsSyncing(false);
+                setSyncError(true);
+                onSyncError?.('Tiempo de espera agotado. Verifica tu conexión.');
+            }
+        }, 15000);
+        
+        const unsubscribe = employeeService.subscribeAll(
+            (data) => {
+                if (!isSubscribed) return;
+                clearTimeout(timeoutId);
+                try {
+                    const sortedData = data.sort((a, b) => {
+                        const nameA = (a.firstName || '').toUpperCase();
+                        const nameB = (b.firstName || '').toUpperCase();
+                        return nameA.localeCompare(nameB);
+                    });
+                    setHrEmployees(sortedData);
+                    setIsSyncing(false);
+                    setLastSync(new Date());
+                    onSyncSuccess?.();
+                } catch (err) {
+                    console.error('Error procesando empleados:', err);
+                    setIsSyncing(false);
+                    setSyncError(true);
+                    onSyncError?.('Error al procesar datos de empleados');
+                }
+            },
+            (error) => {
+                if (!isSubscribed) return;
+                clearTimeout(timeoutId);
+                console.error('Error en sincronización:', error);
+                setIsSyncing(false);
+                setSyncError(true);
+                onSyncError?.('Error de conexión con la base de datos');
+            }
+        );
 
-        return () => unsubscribe();
-    }, [onSyncSuccess]);
+        return () => {
+            isSubscribed = false;
+            clearTimeout(timeoutId);
+            unsubscribe();
+        };
+    }, [onSyncSuccess, onSyncError]);
 
     // Derived simple employees for decretos list
     const employees: Employee[] = React.useMemo(() => {

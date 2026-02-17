@@ -30,14 +30,21 @@ export const employeeService = {
     /**
      * Suscribirse a cambios en tiempo real
      */
-    subscribeAll(callback: (employees: EmployeeExtended[]) => void) {
-        return onSnapshot(collection(db, COLLECTION_NAME), (snapshot) => {
-            const employees = snapshot.docs.map(doc => ({
-                ...doc.data(),
-                id: doc.id
-            } as EmployeeExtended));
-            callback(employees);
-        });
+    subscribeAll(callback: (employees: EmployeeExtended[]) => void, onError?: (error: Error) => void) {
+        return onSnapshot(
+            collection(db, COLLECTION_NAME), 
+            (snapshot) => {
+                const employees = snapshot.docs.map(doc => ({
+                    ...doc.data(),
+                    id: doc.id
+                } as EmployeeExtended));
+                callback(employees);
+            },
+            (error) => {
+                console.error('Error en subscripción de empleados:', error);
+                onError?.(error);
+            }
+        );
     },
 
     /**
