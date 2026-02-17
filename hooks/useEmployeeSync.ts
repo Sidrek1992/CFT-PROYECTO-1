@@ -37,7 +37,7 @@ export const useEmployeeSync = (
         let isSubscribed = true;
         setIsSyncing(true);
         setSyncError(false);
-        
+
         // Timeout de 15 segundos para evitar que se quede colgado
         const timeoutId = setTimeout(() => {
             if (isSubscribed) {
@@ -47,7 +47,7 @@ export const useEmployeeSync = (
                 onSyncError?.('Tiempo de espera agotado. Verifica tu conexión.');
             }
         }, 15000);
-        
+
         const unsubscribe = employeeService.subscribeAll(
             (data) => {
                 if (!isSubscribed) return;
@@ -157,9 +157,7 @@ export const useEmployeeSync = (
 
     // 3. Acciones de Firestore
     const syncEmployeesToFirestore = useCallback(async (data: EmployeeExtended[]) => {
-        for (const emp of data) {
-            await employeeService.upsert(emp);
-        }
+        await employeeService.batchUpsert(data);
     }, []);
 
     const addEmployee = useCallback(async (data: Partial<EmployeeExtended>) => {

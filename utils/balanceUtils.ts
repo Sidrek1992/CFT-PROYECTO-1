@@ -46,6 +46,14 @@ export const recalculateEmployeeUsage = (
   // Key format: "rut-type-startDate"
   const processedEvents = new Set<string>();
 
+  // Pre-index employees for faster lookup
+  const employeeByRut = new Map<string, Employee>();
+  const employeeById = new Map<string, Employee>();
+  employees.forEach(e => {
+    if (e.rut) employeeByRut.set(e.rut, e);
+    employeeById.set(e.id, e);
+  });
+
   // 1. Process Official Decretos (Higher priority for truth)
   records.forEach((record) => {
     if (!record.fechaInicio || !record.rut) return;
@@ -59,19 +67,17 @@ export const recalculateEmployeeUsage = (
     const overlapStart = requestStart < periodStart ? periodStart : requestStart;
     const overlapEnd = requestEnd > periodEnd ? periodEnd : requestEnd;
 
-    // Decretos usually store business days directly in cantidadDias, 
-    // but for the sake of consistency with intervals and shifts:
     const overlapDays = calculateBusinessDays(
       toLocalDateString(overlapStart),
       toLocalDateString(overlapEnd),
       record.solicitudType === 'PA' ? LeaveType.ADMINISTRATIVE : LeaveType.LEGAL_HOLIDAY,
-      WorkShift.JC // Decretos typically represent full days unless specified
+      WorkShift.JC
     );
 
     if (overlapDays <= 0) return;
 
-    // Find the employee by RUT
-    const employee = employees.find(e => e.rut === record.rut);
+    // Fast lookup by Map
+    const employee = employeeByRut.get(record.rut);
     if (!employee) return;
 
     addUsage(employee.id, record.solicitudType, overlapDays);
@@ -82,7 +88,7 @@ export const recalculateEmployeeUsage = (
   requests.forEach((request) => {
     if (request.status !== LeaveStatus.APPROVED) return;
 
-    const employee = employees.find(e => e.id === request.employeeId);
+    const employee = employeeById.get(request.employeeId);
     if (!employee) return;
 
     // Skip if we already processed a decree for this same start date and type

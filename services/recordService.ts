@@ -7,7 +7,8 @@ import {
     deleteDoc,
     doc,
     onSnapshot,
-    setDoc
+    setDoc,
+    writeBatch
 } from 'firebase/firestore';
 import { PermitRecord } from '../types';
 
@@ -67,5 +68,22 @@ export const recordService = {
      */
     async delete(id: string): Promise<void> {
         await deleteDoc(doc(db, COLLECTION_NAME, id));
+    },
+
+    /**
+     * Sincroniza múltiples registros usando lotes (batches)
+     */
+    async batchUpsert(records: PermitRecord[]): Promise<void> {
+        const BATCH_SIZE = 500;
+        for (let i = 0; i < records.length; i += BATCH_SIZE) {
+            const batch = writeBatch(db);
+            const chunk = records.slice(i, i + BATCH_SIZE);
+            chunk.forEach(record => {
+                const { id, ...data } = record;
+                const docRef = doc(db, COLLECTION_NAME, id);
+                batch.set(docRef, data);
+            });
+            await batch.commit();
+        }
     }
 };

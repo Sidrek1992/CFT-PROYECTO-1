@@ -285,35 +285,66 @@ const Dashboard: React.FC<DashboardProps> = ({
         // Departamentos unicos
         const departments = new Set(hrEmployees.map(e => e.department).filter(Boolean));
 
-        // --- Decretos del mes ---
-        const thisMonthRecords = records.filter(r => {
-            if (!r.fechaInicio) return false;
-            const d = new Date(r.fechaInicio + 'T12:00:00');
-            return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-        });
-        const lastMonthRecords = records.filter(r => {
-            if (!r.fechaInicio) return false;
-            const d = new Date(r.fechaInicio + 'T12:00:00');
-            const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-            const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-            return d.getFullYear() === prevYear && d.getMonth() === prevMonth;
-        });
+        // --- Pre-categorize data to avoid O(N*M) filters ---
+        const thisMonthRecords: PermitRecord[] = [];
+        const lastMonthRecords: PermitRecord[] = [];
+        const startsToday: any[] = [];
+        const onLeaveToday: any[] = [];
+        const next7DaysRecs: PermitRecord[] = [];
+        const monthlyData: Record<string, { PA: number; FL: number; total: number }> = {};
+        for (let m = 0; m < 12; m++) monthlyData[monthNames[m]] = { PA: 0, FL: 0, total: 0 };
 
-        // --- Cumulative Today Events ---
-        const today = now.toISOString().split('T')[0];
+        const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        const next7Days = new Date(now);
+        next7Days.setDate(next7Days.getDate() + 7);
+        const next7DaysStr = next7Days.toISOString().split('T')[0];
+        const todayStr = now.toISOString().split('T')[0];
+
+        let thisYearTotal = 0;
+        let lastYearTotal = 0;
+        const lastYear = yearFilter - 1;
+
+        // Process records in a single pass
+        records.forEach(r => {
+            if (!r.fechaInicio) return;
+            const d = new Date(r.fechaInicio + 'T12:00:00');
+            const y = d.getFullYear();
+            const m = d.getMonth();
+            const dateStr = r.fechaInicio;
+
+            // This/Last Month
+            if (y === currentYear && m === currentMonth) thisMonthRecords.push(r);
+            if (y === prevYear && m === prevMonth) lastMonthRecords.push(r);
+
+            // Today
+            if (dateStr === todayStr) startsToday.push({ nombre: r.funcionario, tipo: r.solicitudType });
+            const termino = r.fechaTermino || r.fechaInicio;
+            if (dateStr <= todayStr && termino >= todayStr) onLeaveToday.push({ nombre: r.funcionario, tipo: r.solicitudType });
+
+            // Next 7 days
+            if (dateStr > todayStr && dateStr <= next7DaysStr) next7DaysRecs.push(r);
+
+            // Chart data & Trends
+            if (y === yearFilter) {
+                const key = monthNames[m];
+                if (monthlyData[key]) {
+                    monthlyData[key][r.solicitudType as 'PA' | 'FL'] += r.cantidadDias;
+                    monthlyData[key].total += r.cantidadDias;
+                }
+                thisYearTotal += r.cantidadDias;
+            }
+            if (y === lastYear) lastYearTotal += r.cantidadDias;
+        });
 
         // 1. Birthdays (Next 7 days)
         const cumpleanosSemana = hrEmployees.filter(emp => {
             if (!emp.birthDate) return false;
             const b = new Date(emp.birthDate + 'T12:00:00');
-            // Check if within next 7 days (ignoring year)
             const bDate = new Date(now.getFullYear(), b.getMonth(), b.getDate(), 12, 0, 0);
-
-            // If birthday already passed this year, check against next year (handles Dec-Jan)
             if (bDate < new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)) {
                 bDate.setFullYear(now.getFullYear() + 1);
             }
-
             const diff = (bDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
             return diff >= -1 && diff <= 7;
         }).sort((a, b) => {
@@ -322,131 +353,59 @@ const Dashboard: React.FC<DashboardProps> = ({
             return dateA.getMonth() - dateB.getMonth() || dateA.getDate() - dateB.getDate();
         });
 
-        // 2. Starts Today (PA/FL + HR Requests)
-        const iniciaHoy = [
-            ...records.filter(r => r.fechaInicio === today).map(r => ({
-                nombre: r.funcionario,
-                tipo: r.solicitudType
-            })),
-            ...hrRequests.filter(req => req.status === LeaveStatus.APPROVED && req.startDate === today).map(req => {
-                const emp = hrEmployees.find(e => e.id === req.employeeId);
-                return {
-                    nombre: emp ? `${emp.firstName} ${emp.lastNamePaternal}` : 'Funcionario',
-                    tipo: req.type
-                };
-            })
-        ];
+        // Add Requests to Today/OnLeave
+        hrRequests.forEach(req => {
+            if (req.status !== LeaveStatus.APPROVED) return;
+            const emp = hrEmployees.find(e => e.id === req.employeeId);
+            const nombre = emp ? `${emp.firstName} ${emp.lastNamePaternal}` : 'Funcionario';
 
-        // 3. Currently on Leave (Unified)
-        const enPermisoHoy = [
-            ...records.filter(r => {
-                if (!r.fechaInicio) return false;
-                const inicio = r.fechaInicio;
-                const termino = r.fechaTermino || r.fechaInicio;
-                return inicio <= today && termino >= today;
-            }).map(r => ({
-                nombre: r.funcionario,
-                tipo: r.solicitudType
-            })),
-            ...hrRequests.filter(req => {
-                if (req.status !== LeaveStatus.APPROVED) return false;
-                return req.startDate <= today && req.endDate >= today;
-            }).map(req => {
-                const emp = hrEmployees.find(e => e.id === req.employeeId);
-                return {
-                    nombre: emp ? `${emp.firstName} ${emp.lastNamePaternal}` : 'Funcionario',
-                    tipo: req.type
-                };
-            })
-        ];
+            if (req.startDate === todayStr) startsToday.push({ nombre, tipo: req.type });
+            if (req.startDate <= todayStr && req.endDate >= todayStr) onLeaveToday.push({ nombre, tipo: req.type });
+        });
 
-        // --- Proximos eventos (proximas 7 dias) ---
-        const next7Days = new Date(now);
-        next7Days.setDate(next7Days.getDate() + 7);
-        const next7DaysStr = next7Days.toISOString().split('T')[0];
-        const proximosEventos = records.filter(r => {
-            if (!r.fechaInicio) return false;
-            return r.fechaInicio > today && r.fechaInicio <= next7DaysStr;
-        }).sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio));
+        // --- Stats Calculations (Summary) ---
 
-        // --- Dias laborales restantes del ano ---
+
+        // --- Time Calculations ---
         const endOfYear = new Date(currentYear, 11, 31);
         const diffTime = endOfYear.getTime() - now.getTime();
         const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        // Dias habiles aproximados (excluir fines de semana)
         let diasHabilesRestantes = 0;
         const tempDate = new Date(now);
         while (tempDate <= endOfYear) {
-            const dayOfWeek = tempDate.getDay();
-            if (dayOfWeek !== 0 && dayOfWeek !== 6) diasHabilesRestantes++;
+            if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) diasHabilesRestantes++;
             tempDate.setDate(tempDate.getDate() + 1);
         }
 
-        // --- Saldos bajos (<2 dias) ---
-        const lowBalancePA: Array<{ nombre: string; rut: string; saldo: number }> = [];
-        const lowBalanceFL: Array<{ nombre: string; rut: string; saldo: number }> = [];
+        // --- Low Balances ---
+        const lowBalancePA: any[] = [];
+        const lowBalanceFL: any[] = [];
+        const lastByRutPA = new Map<string, PermitRecord>();
+        const lastByRutFL = new Map<string, PermitRecord>();
 
-        // Ultimo registro por RUT por tipo
-        const lastByRutPA: Record<string, PermitRecord> = {};
-        const lastByRutFL: Record<string, PermitRecord> = {};
-        const sortedRecords = [...records].sort((a, b) => b.createdAt - a.createdAt);
-
-        sortedRecords.forEach(r => {
-            if (r.solicitudType === 'PA' && !lastByRutPA[r.rut]) {
-                lastByRutPA[r.rut] = r;
-            } else if (r.solicitudType === 'FL' && !lastByRutFL[r.rut]) {
-                lastByRutFL[r.rut] = r;
+        // Use a single loop to find latest records
+        records.forEach(r => {
+            if (r.solicitudType === 'PA') {
+                const existing = lastByRutPA.get(r.rut);
+                if (!existing || r.createdAt > existing.createdAt) lastByRutPA.set(r.rut, r);
+            } else if (r.solicitudType === 'FL') {
+                const existing = lastByRutFL.get(r.rut);
+                if (!existing || r.createdAt > existing.createdAt) lastByRutFL.set(r.rut, r);
             }
         });
 
-        Object.entries(lastByRutPA).forEach(([rut, r]) => {
-            const saldo = r.diasHaber - r.cantidadDias;
-            if (saldo < 2) {
-                lowBalancePA.push({ nombre: r.funcionario, rut, saldo });
-            }
+        lastByRutPA.forEach((r, rut) => {
+            if (r.diasHaber - r.cantidadDias < 2) lowBalancePA.push({ nombre: r.funcionario, rut, saldo: r.diasHaber - r.cantidadDias });
         });
-
-        Object.entries(lastByRutFL).forEach(([rut, r]) => {
+        lastByRutFL.forEach((r, rut) => {
             const saldo = (r.saldoFinalP1 ?? 0) + (r.saldoFinalP2 ?? 0);
-            if (saldo < 2) {
-                lowBalanceFL.push({ nombre: r.funcionario, rut, saldo });
-            }
-        });
-
-        // --- Tendencias mensuales (ano filtrado) ---
-        const monthlyData: Record<string, { PA: number; FL: number; total: number }> = {};
-        for (let m = 0; m < 12; m++) {
-            monthlyData[monthNames[m]] = { PA: 0, FL: 0, total: 0 };
-        }
-
-        records.filter(r => {
-            if (!r.fechaInicio) return false;
-            return new Date(r.fechaInicio + 'T12:00:00').getFullYear() === yearFilter;
-        }).forEach(r => {
-            const m = new Date(r.fechaInicio + 'T12:00:00').getMonth();
-            const key = monthNames[m];
-            monthlyData[key][r.solicitudType] += r.cantidadDias;
-            monthlyData[key].total += r.cantidadDias;
+            if (saldo < 2) lowBalanceFL.push({ nombre: r.funcionario, rut, saldo });
         });
 
         const chartData = Object.entries(monthlyData).map(([name, data]) => ({ name, ...data }));
-
-        // --- Comparativa ano anterior ---
-        const lastYear = yearFilter - 1;
-        const thisYearTotal = records.filter(r => {
-            if (!r.fechaInicio) return false;
-            return new Date(r.fechaInicio + 'T12:00:00').getFullYear() === yearFilter;
-        }).reduce((acc, r) => acc + r.cantidadDias, 0);
-
-        const lastYearTotal = records.filter(r => {
-            if (!r.fechaInicio) return false;
-            return new Date(r.fechaInicio + 'T12:00:00').getFullYear() === lastYear;
-        }).reduce((acc, r) => acc + r.cantidadDias, 0);
-
         const yearTrend = lastYearTotal === 0 ? 0 : ((thisYearTotal - lastYearTotal) / lastYearTotal) * 100;
 
-        // --- Distribucion por departamento ---
         const byDepartment: Record<string, number> = {};
         hrEmployees.forEach(emp => {
             const dept = emp.department || 'Sin asignar';
@@ -481,11 +440,11 @@ const Dashboard: React.FC<DashboardProps> = ({
             lastMonthCount: lastMonthRecords.length,
 
             // Ausentismo & Eventos
-            enPermisoHoy,
+            enPermisoHoy: onLeaveToday,
             cumpleanosSemana,
-            iniciaHoy,
-            ausentesHoy: enPermisoHoy.length,
-            proximosEventos: proximosEventos.slice(0, 3),
+            iniciaHoy: startsToday,
+            ausentesHoy: onLeaveToday.length,
+            proximosEventos: next7DaysRecs.slice(0, 3).sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio)),
 
             // Tiempo
             diasRestantes,

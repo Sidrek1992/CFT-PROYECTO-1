@@ -9,7 +9,8 @@ import {
     query,
     where,
     setDoc,
-    onSnapshot
+    onSnapshot,
+    writeBatch
 } from 'firebase/firestore';
 import { EmployeeExtended } from '../types';
 
@@ -32,7 +33,7 @@ export const employeeService = {
      */
     subscribeAll(callback: (employees: EmployeeExtended[]) => void, onError?: (error: Error) => void) {
         return onSnapshot(
-            collection(db, COLLECTION_NAME), 
+            collection(db, COLLECTION_NAME),
             (snapshot) => {
                 const employees = snapshot.docs.map(doc => ({
                     ...doc.data(),
@@ -76,5 +77,22 @@ export const employeeService = {
      */
     async delete(id: string): Promise<void> {
         await deleteDoc(doc(db, COLLECTION_NAME, id));
+    },
+
+    /**
+     * Sincroniza múltiples empleados usando lotes (batches)
+     */
+    async batchUpsert(employees: EmployeeExtended[]): Promise<void> {
+        const BATCH_SIZE = 500;
+        for (let i = 0; i < employees.length; i += BATCH_SIZE) {
+            const batch = writeBatch(db);
+            const chunk = employees.slice(i, i + BATCH_SIZE);
+            chunk.forEach(emp => {
+                const { id, ...data } = emp;
+                const docRef = doc(db, COLLECTION_NAME, id);
+                batch.set(docRef, data);
+            });
+            await batch.commit();
+        }
     }
 };

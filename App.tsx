@@ -275,10 +275,13 @@ const AppContent: React.FC = () => {
     try { localStorage.setItem('gdp_unified_config_v2', JSON.stringify(appConfig)); } catch { /* ignore */ }
   }, [appConfig]);
 
-  // Sync hrEmployees with Decretos and Requests
+  // Sync hrEmployees with Decretos and Requests (Debounced to prevent freezing during mass updates)
   useEffect(() => {
     if (hrEmployees.length > 0 && (records.length > 0 || hrRequests.length > 0)) {
-      setHrEmployees(prev => recalculateEmployeeUsage(prev, hrRequests, records, getOperationalYear()));
+      const timer = setTimeout(() => {
+        setHrEmployees(prev => recalculateEmployeeUsage(prev, hrRequests, records, getOperationalYear()));
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [records, hrRequests, setHrEmployees]);
 
@@ -288,20 +291,36 @@ const AppContent: React.FC = () => {
     return calculateNextCorrelatives(records, year);
   }, [records]);
 
-  // Critical alert count for WelcomeBanner
+  // Critical alert count for WelcomeBanner - Optimized with Map
   const notifications_criticalCount = useMemo(() => {
+    if (employees.length === 0 || records.length === 0) return 0;
+
+    // Pre-calculate latest record per RUT and type to avoid O(N*M) filtering
+    const latestPA = new Map<string, PermitRecord>();
+    const latestFL = new Map<string, PermitRecord>();
+
+    records.forEach(r => {
+      if (!r.rut) return;
+      if (r.solicitudType === 'PA') {
+        const existing = latestPA.get(r.rut);
+        if (!existing || r.createdAt > existing.createdAt) latestPA.set(r.rut, r);
+      } else if (r.solicitudType === 'FL') {
+        const existing = latestFL.get(r.rut);
+        if (!existing || r.createdAt > existing.createdAt) latestFL.set(r.rut, r);
+      }
+    });
+
     let count = 0;
     employees.forEach(emp => {
-      const paRecs = records.filter(r => r.rut === emp.rut && r.solicitudType === 'PA');
-      if (paRecs.length > 0) {
-        const sorted = [...paRecs].sort((a, b) => b.createdAt - a.createdAt);
-        const saldo = sorted[0].diasHaber - sorted[0].cantidadDias;
+      const paRecord = latestPA.get(emp.rut);
+      if (paRecord) {
+        const saldo = paRecord.diasHaber - paRecord.cantidadDias;
         if (saldo <= 0) count++;
       }
-      const flRecs = records.filter(r => r.rut === emp.rut && r.solicitudType === 'FL');
-      if (flRecs.length > 0) {
-        const sorted = [...flRecs].sort((a, b) => b.createdAt - a.createdAt);
-        const saldoFL = getFLSaldoFinal(sorted[0], 0);
+
+      const flRecord = latestFL.get(emp.rut);
+      if (flRecord) {
+        const saldoFL = getFLSaldoFinal(flRecord, 0);
         if (saldoFL <= 0) count++;
       }
     });

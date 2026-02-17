@@ -91,9 +91,7 @@ export const useCloudSync = (
 
   // 3. Acciones de Firestore
   const syncToFirestore = useCallback(async (data: PermitRecord[]) => {
-    for (const record of data) {
-      await recordService.upsert(record);
-    }
+    await recordService.batchUpsert(data);
   }, []);
 
   const addRecord = useCallback(async (data: Omit<PermitRecord, 'id' | 'createdAt'>) => {
