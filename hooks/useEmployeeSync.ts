@@ -32,6 +32,16 @@ export const useEmployeeSync = (
     const [lastSync, setLastSync] = useState<Date | null>(null);
 
     const abortControllerRef = useRef<AbortController | null>(null);
+    
+    // Usar refs para los callbacks para evitar re-suscripciones infinitas
+    const onSyncSuccessRef = useRef(onSyncSuccess);
+    const onSyncErrorRef = useRef(onSyncError);
+    
+    // Mantener refs actualizadas
+    useEffect(() => {
+        onSyncSuccessRef.current = onSyncSuccess;
+        onSyncErrorRef.current = onSyncError;
+    }, [onSyncSuccess, onSyncError]);
 
     // 1. Suscribirse a Firestore en tiempo real
     useEffect(() => {
@@ -44,7 +54,7 @@ export const useEmployeeSync = (
                 console.warn('Timeout de sincronización alcanzado');
                 setIsSyncing(false);
                 setSyncError(true);
-                onSyncError?.('Tiempo de espera agotado. Verifica tu conexión.');
+                onSyncErrorRef.current?.('Tiempo de espera agotado. Verifica tu conexión.');
             }
         }, 15000);
 
@@ -61,12 +71,12 @@ export const useEmployeeSync = (
                     setHrEmployees(sortedData);
                     setIsSyncing(false);
                     setLastSync(new Date());
-                    onSyncSuccess?.();
+                    onSyncSuccessRef.current?.();
                 } catch (err) {
                     console.error('Error procesando empleados:', err);
                     setIsSyncing(false);
                     setSyncError(true);
-                    onSyncError?.('Error al procesar datos de empleados');
+                    onSyncErrorRef.current?.('Error al procesar datos de empleados');
                 }
             },
             (error) => {
@@ -75,7 +85,7 @@ export const useEmployeeSync = (
                 console.error('Error en sincronización:', error);
                 setIsSyncing(false);
                 setSyncError(true);
-                onSyncError?.('Error de conexión con la base de datos');
+                onSyncErrorRef.current?.('Error de conexión con la base de datos');
             }
         );
 
@@ -84,7 +94,7 @@ export const useEmployeeSync = (
             clearTimeout(timeoutId);
             unsubscribe();
         };
-    }, [onSyncSuccess, onSyncError]);
+    }, []); // Sin dependencias - solo se suscribe una vez
 
     // Derived simple employees for decretos list
     const employees: Employee[] = React.useMemo(() => {
@@ -97,7 +107,7 @@ export const useEmployeeSync = (
     // 2. Fetch desde Google Sheets (ahora como IMPORTACION)
     const fetchEmployeesFromCloud = useCallback(async (): Promise<EmployeeExtended[] | null> => {
         if (!navigator.onLine) {
-            onSyncError?.('Sin conexión a internet para importar');
+            onSyncErrorRef.current?.('Sin conexión a internet para importar');
             return null;
         }
 
@@ -148,12 +158,12 @@ export const useEmployeeSync = (
             return null;
         } catch (e) {
             employeeLogger.error("Error al importar desde Sheets:", e);
-            onSyncError?.("Error al conectar con Google Sheets");
+            onSyncErrorRef.current?.("Error al conectar con Google Sheets");
             return null;
         } finally {
             setIsSyncing(false);
         }
-    }, [onSyncError]);
+    }, []); // Sin dependencias - usa refs para callbacks
 
     // 3. Acciones de Firestore
     const syncEmployeesToFirestore = useCallback(async (data: EmployeeExtended[]) => {

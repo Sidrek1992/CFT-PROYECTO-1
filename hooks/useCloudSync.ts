@@ -38,6 +38,16 @@ export const useCloudSync = (
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [undoStack, setUndoStack] = useState<PermitRecord[][]>([]);
 
+  // Usar refs para los callbacks para evitar re-suscripciones infinitas
+  const onSyncSuccessRef = useRef(onSyncSuccess);
+  const onSyncErrorRef = useRef(onSyncError);
+  
+  // Mantener refs actualizadas
+  useEffect(() => {
+    onSyncSuccessRef.current = onSyncSuccess;
+    onSyncErrorRef.current = onSyncError;
+  }, [onSyncSuccess, onSyncError]);
+
   // 1. Suscribirse a Firestore en tiempo real
   useEffect(() => {
     setIsSyncing(true);
@@ -45,16 +55,16 @@ export const useCloudSync = (
       setRecords(data.sort((a, b) => compareRecordsByDateDesc(a, b)));
       setIsSyncing(false);
       setLastSync(new Date());
-      onSyncSuccess?.();
+      onSyncSuccessRef.current?.();
     });
 
     return () => unsubscribe();
-  }, [onSyncSuccess]);
+  }, []); // Sin dependencias - solo se suscribe una vez
 
   // 2. Importar desde Google Sheets
   const fetchFromSheets = useCallback(async (): Promise<PermitRecord[] | null> => {
     if (!navigator.onLine) {
-      onSyncError?.('Sin conexión a internet');
+      onSyncErrorRef.current?.('Sin conexión a internet');
       return null;
     }
 
@@ -83,12 +93,12 @@ export const useCloudSync = (
       return allImported;
     } catch (e) {
       syncLogger.error("Error al importar desde Sheets:", e);
-      onSyncError?.("Error al conectar con Google Sheets");
+      onSyncErrorRef.current?.("Error al conectar con Google Sheets");
       return null;
     } finally {
       setIsSyncing(false);
     }
-  }, [onSyncError]);
+  }, []); // Sin dependencias - usa refs para callbacks
 
   // 3. Acciones de Firestore
   const syncToFirestore = useCallback(async (data: PermitRecord[]) => {
