@@ -11,8 +11,6 @@ interface SettingsProps {
   requests?: LeaveRequest[];
   onSave: (newConfig: AppConfig, applyToAll: boolean) => void;
   onImport?: (data: { employees: Employee[], requests: LeaveRequest[], config: AppConfig }) => void;
-  onMigrateEmployees?: () => Promise<void>;
-  onMigrateRecords?: () => Promise<void>;
 }
 
 type TemplateTab = 'general' | 'legal' | 'admin' | 'sick';
@@ -23,8 +21,6 @@ export const Settings: React.FC<SettingsProps> = ({
   requests = [],
   onSave,
   onImport,
-  onMigrateEmployees,
-  onMigrateRecords
 }) => {
   const [vacationDays, setVacationDays] = useState(config.defaultVacationDays);
   const [adminDays, setAdminDays] = useState(config.defaultAdminDays);
@@ -597,39 +593,6 @@ export const Settings: React.FC<SettingsProps> = ({
         </form>
       </div>
 
-      {/* Cloud Migration Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
-          <h3 className="font-semibold text-indigo-900 flex items-center gap-2">
-            <Cloud size={18} className="text-indigo-600" />
-            Migración a la Nube (Firestore)
-          </h3>
-        </div>
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-slate-600">
-            Utilice estas herramientas para migrar sus datos heredados desde Google Sheets directamente a la base de datos Firestore.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button
-              onClick={onMigrateEmployees}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium transition-colors shadow-sm"
-            >
-              <Users size={18} />
-              Migrar Funcionarios (Sheets → Cloud)
-            </button>
-            <button
-              onClick={onMigrateRecords}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors shadow-sm"
-            >
-              <FileSpreadsheet size={18} />
-              Migrar Decretos (Sheets → Cloud)
-            </button>
-          </div>
-          <p className="text-[10px] text-slate-400 italic">
-            * Nota: Este proceso puede tomar unos segundos. Se recomienda realizarlo una sola vez para poblar la base de datos inicial.
-          </p>
-        </div>
-      </div>
     </div>
   );
 };

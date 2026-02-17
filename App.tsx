@@ -232,44 +232,9 @@ const AppContent: React.FC = () => {
     (error) => toast.error('Error de decretos', error)
   );
 
-  // MIGRACION: Manual trigger handlers
-  const handleMigrateEmployees = useCallback(async () => {
-    if (!window.confirm('¿Deseas intentar migrar funcionarios desde Google Sheets a Firestore?')) return;
-    const imported = await importEmployeesFromSheets();
-    if (imported) {
-      toast.info('Migrando...', 'Subiendo funcionarios a Firestore');
-      for (const emp of imported) {
-        await addEmployee(emp);
-      }
-      toast.success('Exito', 'Funcionarios migrados a Firestore');
-    }
-  }, [importEmployeesFromSheets, addEmployee, toast]);
 
-  const handleMigrateRecords = useCallback(async () => {
-    if (!window.confirm('¿Deseas intentar migrar decretos desde Google Sheets a Firestore?')) return;
-    const imported = await importRecordsFromSheets();
-    if (imported) {
-      toast.info('Migrando...', 'Subiendo decretos a Firestore');
-      for (const rec of imported) {
-        await addRecord(rec);
-      }
-      toast.success('Exito', 'Decretos migrados a Firestore');
-    }
-  }, [importRecordsFromSheets, addRecord, toast]);
 
-  // MIGRACION: Si Firestore está vacío, ofrecer importar
-  const handleInitialMigration = useCallback(async () => {
-    if (hrEmployees.length === 0 && window.confirm('¿Deseas intentar migrar datos iniciales desde Google Sheets?')) {
-      await handleMigrateEmployees();
-    }
-  }, [hrEmployees.length, handleMigrateEmployees]);
 
-  // Handle migration check on mount
-  useEffect(() => {
-    if (hrEmployees.length === 0) {
-      handleInitialMigration();
-    }
-  }, [hrEmployees.length, handleInitialMigration]);
 
   const [editingRecord, setEditingRecord] = useState<PermitRecord | null>(null);
   const [activeTab, setActiveTab] = useState<SolicitudType | 'ALL'>('ALL');
@@ -625,7 +590,7 @@ const AppContent: React.FC = () => {
   // Keyboard shortcuts
   const shortcuts = useMemo(() => [
     { key: 'n', ctrlKey: true, action: () => { setCurrentView('decretos'); formRef.current?.scrollIntoView({ behavior: 'smooth' }); }, description: 'Nuevo decreto' },
-    { key: 's', ctrlKey: true, action: () => importRecordsFromSheets(), description: 'Sincronizar' },
+
     { key: 'e', ctrlKey: true, action: handleExportData, description: 'Exportar Excel' },
     { key: 'd', ctrlKey: true, action: toggleDarkMode, description: 'Cambiar tema' },
     { key: 'b', ctrlKey: true, action: () => openModal('decreeBook'), description: 'Libro de decretos' },
@@ -835,8 +800,7 @@ const AppContent: React.FC = () => {
               requests={hrRequests}
               onSave={handleSaveConfig}
               onImport={handleImportData}
-              onMigrateEmployees={handleMigrateEmployees}
-              onMigrateRecords={handleMigrateRecords}
+
             />
             {role === 'admin' && (
               <div className="max-w-5xl mx-auto mt-8 mb-8">

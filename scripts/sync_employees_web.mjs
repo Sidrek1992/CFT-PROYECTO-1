@@ -1,14 +1,24 @@
+/**
+ * Script de sincronización de empleados usando Firebase Web SDK
+ * Ejecutar con: node scripts/sync_employees_web.mjs
+ */
 
-import admin from 'firebase-admin';
-import { readFileSync } from 'fs';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, doc, setDoc, getDocs } from 'firebase/firestore';
 
-// Initialize Firebase Admin with the project ID from environment
-// Since we are running locally, it should pick up the application default credentials
-admin.initializeApp({
-    projectId: 'app-correo-cft'
-});
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: 'AIzaSyBvRGiSWUdnZ88NsUX0EsLdnXwJk5AXVSA',
+    authDomain: 'app-correo-cft.firebaseapp.com',
+    projectId: 'app-correo-cft',
+    storageBucket: 'app-correo-cft.firebasestorage.app',
+    messagingSenderId: '140293468941',
+    appId: '1:140293468941:web:5e0ac40c2587880b34f644'
+};
 
-const db = admin.firestore();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 const COLLECTION_NAME = 'employees';
 
 const csvData = `N°,Nombres,Primer Apellido,Segundo Apellido,Rut,Fecha de Nacimiento,Género,Hijos,Télefono,Contacto Familiar,Estado Civil,Email Personal,Domicilio,Licencia Conducir,Profesión,Postgrado,Cargo,Dirección,Área,Estamento,Correo Institucional,Fecha Ingreso,Fecha Término,Tipo de Contrato
@@ -75,14 +85,31 @@ const csvData = `N°,Nombres,Primer Apellido,Segundo Apellido,Rut,Fecha de Nacim
 61,Gabriela Paola,Zorrilla,Neumann,16.294.697-8,1986-08-15,F,No,966796106,"982489167, José Zorrilla (Padre) / 992404753, Erna Neumann (Mamá)",Soltera,gabypaolaz@gmail.com,Yungay N°503,---,Psicopedagoga,Magister en Educación con mención en Gestión de Calidad,Asesora Técnica Pedagógica,DIAC,Subdirección Académica de Docencia,Profesional Encargado,asesora.t.pedagogica@cftestatalaricayparinacota.cl,2022-03-22,2022-07-31,Indefinido`;
 
 function parseCSV(csv) {
-    const [headerLine, ...rows] = csv.split('\n');
-    const headers = headerLine.split(',');
+    const lines = csv.split('\n');
+    const headers = [];
+    let headerLine = lines[0];
+    
+    // Parse header
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < headerLine.length; i++) {
+        const char = headerLine[i];
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+            headers.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    headers.push(current.trim());
 
-    return rows.map(row => {
-        // Basic CSV parser that handles quotes
+    // Parse rows
+    return lines.slice(1).map(row => {
         const values = [];
-        let current = '';
-        let inQuotes = false;
+        current = '';
+        inQuotes = false;
 
         for (let i = 0; i < row.length; i++) {
             const char = row[i];
@@ -99,7 +126,7 @@ function parseCSV(csv) {
 
         const obj = {};
         headers.forEach((h, i) => {
-            obj[h] = values[i];
+            obj[h] = values[i] || '';
         });
         return obj;
     });
@@ -113,25 +140,32 @@ async function sync() {
     const employees = parseCSV(csvData);
     console.log(`Parsed ${employees.length} employees from CSV.`);
 
-    const snapshot = await db.collection(COLLECTION_NAME).get();
+    // Get existing employees
+    const snapshot = await getDocs(collection(db, COLLECTION_NAME));
     const existingEmployees = {};
-    snapshot.forEach(doc => {
-        const data = doc.data();
+    snapshot.forEach(docSnap => {
+        const data = docSnap.data();
         if (data.rut) {
-            existingEmployees[data.rut] = { id: doc.id, ...data };
+            existingEmployees[data.rut] = { id: docSnap.id, ...data };
         }
     });
     console.log(`Found ${Object.keys(existingEmployees).length} existing employees in Firestore.`);
 
     let updated = 0;
     let added = 0;
+    let skipped = 0;
 
     for (const emp of employees) {
-        if (!emp.Rut) continue;
+        if (!emp.Rut || emp.Rut.trim() === '') {
+            skipped++;
+            continue;
+        }
 
         const rut = emp.Rut.trim();
-        const docId = rut.replace(/\./g, '').replace(/-/g, '').toLowerCase(); // Normalize RUT for ID
+        const docId = rut.replace(/\./g, '').replace(/-/g, '').toLowerCase();
 
+        const existing = existingEmployees[rut];
+        
         const employeeData = {
             firstName: emp.Nombres || '',
             lastNamePaternal: emp['Primer Apellido'] || '',
@@ -145,33 +179,31 @@ async function sync() {
             emailPersonal: emp['Email Personal'] || '',
             emergencyContact: emp['Contacto Familiar'] || '',
             avatarUrl: getAvatarUrl(emp.Nombres || '', emp['Primer Apellido'] || ''),
-            // Default balances if not present
-            totalVacationDays: 15,
-            usedVacationDays: 0,
-            totalAdminDays: 6,
-            usedAdminDays: 0,
-            totalSickLeaveDays: 0,
-            usedSickLeaveDays: 0,
-            jefaturaNombre: '',
-            jefaturaEmail: '',
+            // Preserve existing balances or use defaults
+            totalVacationDays: existing?.totalVacationDays ?? 15,
+            usedVacationDays: existing?.usedVacationDays ?? 0,
+            totalAdminDays: existing?.totalAdminDays ?? 6,
+            usedAdminDays: existing?.usedAdminDays ?? 0,
+            totalSickLeaveDays: existing?.totalSickLeaveDays ?? 0,
+            usedSickLeaveDays: existing?.usedSickLeaveDays ?? 0,
+            jefaturaNombre: existing?.jefaturaNombre ?? '',
+            jefaturaEmail: existing?.jefaturaEmail ?? '',
             id: docId
         };
 
-        const docRef = db.collection(COLLECTION_NAME).doc(docId);
-        const docSnap = await docRef.get();
-
-        if (docSnap.exists) {
-            // Update existing with merge to preserve fields not in CSV (like manual adjustments)
-            await docRef.set(employeeData, { merge: true });
+        const docRef = doc(db, COLLECTION_NAME, docId);
+        await setDoc(docRef, employeeData, { merge: true });
+        
+        if (existing) {
             updated++;
         } else {
-            // Add new employee
-            await docRef.set(employeeData);
             added++;
         }
+        
+        console.log(`${existing ? 'Updated' : 'Added'}: ${employeeData.firstName} ${employeeData.lastNamePaternal}`);
     }
 
-    console.log(`Sync complete: ${updated} updated, ${added} added.`);
+    console.log(`\nSync complete: ${updated} updated, ${added} added, ${skipped} skipped (no RUT).`);
     process.exit(0);
 }
 
